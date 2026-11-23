@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>生命周期 Hooks · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../../assets/manual.css">
+</head>
+<body data-root="../../" data-page="advanced/plugin/hooks.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../../index.html"><img src="../../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><h1 id="生命周期-hooks">生命周期 Hooks</h1>
+<p>Hooks 使插件可在 AI 运行的固定节点接收通知，或在工具执行前后、provider 请求发出前、权限确认前介入。Hooks 与 AI 工具共用同一运行时和 handler 表，声明写法见<a href="manifest.html#hooks">清单参考</a>，TypeScript 注册方式见<a href="source-build.html#运行时与-sdk">运行时与 SDK</a>。</p>
+<h2 id="三种模式">三种模式</h2>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>行为</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>observe</code>（默认）</td>
+<td>宿主异步派发，插件仅返回日志或自身结果，不影响主流程</td>
+<td>记录、统计、通知</td>
+</tr>
+<tr>
+<td><code>transform</code></td>
+<td>宿主在固定拦截点等待结果，校验通过后应用；失败、超时或格式错误保持原值</td>
+<td>拒绝危险调用、改写参数、脱敏结果、改写请求</td>
+</tr>
+<tr>
+<td><code>review</code></td>
+<td>仅在宿主判定需要使用者确认（ASK）后运行，返回 allow / deny / pass</td>
+<td>代审核</td>
+</tr>
+</tbody>
+</table>
+<p><code>transform</code> 与 <code>review</code> 事件必须在清单中显式声明 <code>mode</code>；声明错误将导致拒绝安装。</p>
+<h2 id="只读观察事件">只读观察事件</h2>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>时机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app.started</code></td>
+<td>App 主进程启动完成时；用于常驻插件初始化</td>
+</tr>
+<tr>
+<td><code>plugin.installed</code></td>
+<td>插件安装或版本替换完成后；只通知该插件自身</td>
+</tr>
+<tr>
+<td><code>plugin.uninstalled</code></td>
+<td>插件卸载生效前；安装目录与数据目录仍可访问</td>
+</tr>
+<tr>
+<td><code>plugin.enabled</code></td>
+<td>插件启用生效后；只通知该插件自身</td>
+</tr>
+<tr>
+<td><code>plugin.disabled</code></td>
+<td>插件停用生效前；此时插件仍可运行</td>
+</tr>
+<tr>
+<td><code>agent.run.started</code></td>
+<td>一轮对话开始处理时</td>
+</tr>
+<tr>
+<td><code>agent.run.finished</code></td>
+<td>一轮对话结束时；成功、失败或被取消都会发出</td>
+</tr>
+<tr>
+<td><code>agent.request.started</code></td>
+<td>一次模型请求即将发出时</td>
+</tr>
+<tr>
+<td><code>agent.request.finished</code></td>
+<td>一次模型响应结束；成功、失败或取消都会发出</td>
+</tr>
+<tr>
+<td><code>agent.tool.started</code></td>
+<td>一次工具调用真正开始执行时</td>
+</tr>
+<tr>
+<td><code>agent.tool.finished</code></td>
+<td>一次工具调用结束；成功或失败</td>
+</tr>
+<tr>
+<td><code>agent.compaction</code></td>
+<td>上下文被压缩时</td>
+</tr>
+<tr>
+<td><code>backup.export.before</code></td>
+<td>一次备份准备写入归档前；需声明 <code>contributes.backup</code> 并由使用者授权</td>
+</tr>
+<tr>
+<td><code>backup.import.finished</code></td>
+<td>一次还原完成、插件区段已解到暂存目录后；需声明 <code>contributes.backup</code> 并由使用者授权</td>
+</tr>
+</tbody>
+</table>
+<p>只读事件的 payload 不包含消息正文、工具参数、工具结果和模型输出。</p>
+<p><code>plugin.installed</code> 与 <code>plugin.enabled</code> 异步派发，不阻塞安装或启用。<code>plugin.uninstalled</code> 与 <code>plugin.disabled</code> 在状态变更前同步等待，给插件清理自己数据的机会；单次最多等待 10 秒，超时或失败后继续卸载/停用，插件不能阻止操作。这四个事件只派发给事件对应的插件，不广播给其他插件。</p>
+<h3 id="备份与还原事件">备份与还原事件</h3>
+<p>备份事件用于读写该插件自己的备份区段，区段内容由插件决定，可能包含敏感配置或记录：</p>
+<ul>
+<li>插件必须声明 <code>contributes.backup</code>（用途说明），并由使用者在插件详情的「权限」中单独开启「备份与还原事件」；未授权不会派发。</li>
+<li>插件还要在 <code>backup.data</code> 槽位声明一个数据选项（<code>id</code> / <code>title</code> / <code>icon</code>，不能写 <code>page</code> 或 <code>handler</code>）。宿主在备份页「选择导出数据」渲染开关；勾选后该插件参与本次导出与还原。</li>
+<li>导出前宿主调用 <code>backup.export.before</code>，payload 的 <code>dir</code> 是 <code>data://backup-export</code>；插件把额外数据写入其中（建议用 <code>global/…</code> 与 <code>project/…</code> 两个子目录）。宿主将其打包为归档内的 <code>plugins/&lt;pluginId&gt;/…</code> 区段。</li>
+<li>导入时宿主先把该区段解到 <code>data://backup-import</code>，还原完主数据后再调用 <code>backup.import.finished</code>；插件从 <code>dir</code> 把数据写回真实路径。</li>
+<li>暂存目录由宿主在操作结束后清理；如果宿主本次已经恢复了 MCP（<code>stats.mcpServers &gt; 0</code>），插件应跳过自己区段里的 <code>mcp.json</code>，避免覆盖宿主版本。</li>
+<li>事件由宿主同步等待：导出前把数据写入暂存区，导入后再写回真实路径；失败或超时只写日志，不阻塞备份与还原。</li>
+</ul>
+<p><code>backup</code>、备份 Hooks 与数据选项的声明见<a href="manifest.html#backup">备份清单</a>。</p>
+<p>插件把数据写入 <code>dir</code>，宿主负责打包；导入时从 <code>dir</code> 读回。数据量应控制在单文件 8 MiB、单插件 64 MiB 以内。宿主在读取前及读取过程中限制大小；超限文件会跳过并写入日志，超过单插件总量后不再继续打包该插件的后续文件。</p>
+<pre><code class="language-js">const handlers = {
+  'hooks.onExportBefore': async (payload) =&gt; {
+    await hostCall('host.fs.write', {
+      path: payload.dir + '/global/memory/note.md',
+      content: '...'
+    });
+    return {logs: ['extra data staged']};
+  },
+  'hooks.onImport': async (payload) =&gt; {
+    const file = await hostCall('host.fs.read', {path: payload.dir + '/global/memory/note.md'});
+    await hostCall('host.fs.write', {path: '~/.minibot/memory/note.md', content: file.content});
+    return {logs: [`restored ${payload.files} files`]};
+  }
+};
+</code></pre>
+<h2 id="可写事件">可写事件</h2>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>时机</th>
+<th>可返回的变更</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agent.tool.before</code></td>
+<td>工具执行前、权限判定前</td>
+<td><code>decision: "deny"</code> 阻止执行；<code>arguments</code> 改写参数；<code>delegate: {handler}</code> 选择插件执行方</td>
+</tr>
+<tr>
+<td><code>agent.tool.after</code></td>
+<td>工具成功结束后</td>
+<td><code>data</code> 改写成功结果的数据</td>
+</tr>
+<tr>
+<td><code>agent.http.before</code></td>
+<td>每次实际发出 provider HTTP 请求前</td>
+<td><code>url</code>、<code>headers</code>、<code>body</code> 改写请求</td>
+</tr>
+</tbody>
+</table>
+<p><code>agent.tool.before</code> 发生在权限判定之前。改写参数后，宿主会按最终参数重新执行完整权限判断与模式限制，原批准不会沿用。</p>
+<p><code>agent.tool.after</code> 仅处理成功结果，不得将错误改为成功，也不得伪造附件或图片。改写后的结果同时用于界面展示和回放给模型。</p>
+<p><code>agent.http.before</code> 处理共享 HTTP 客户端中符合条件的 POST 请求：请求体不超过 4 MiB，且去除前导空白后以 <code>{</code> 开头；GET、超限或其他正文格式会跳过。对话、标题生成、上下文压缩、测试和图片请求中符合条件的调用均可触发；网络重试或更换 Key 可能重复触发，handler 应保持幂等。超时预算见<a href="#执行顺序与超时">执行顺序与超时</a>。</p>
+<p><code>agent.http.before</code> 的敏感请求头在 payload 中只以占位符 <code>{{Token}}</code> 出现：App 实际会添加的 <code>Authorization</code>（OpenAI/MCP）、<code>x-api-key</code>（Anthropic）与 <code>x-goog-api-key</code>（Gemini）；provider 自定义 header 中如果包含同一份密钥值，也会被替换为占位符。插件原样回传 <code>{{Token}}</code>，且请求仍发往原 origin 时，宿主才恢复真实值；插件无法读到真实鉴权头。</p>
+<div class="custom-block warning"><p class="custom-block-title">请求体可见</p><p>payload 仍包含完整请求体（可能含对话内容），仅应安装可信来源的插件。</p></div>
+<h3 id="委托工具执行">委托工具执行</h3>
+<p>声明 <code>agent.tool.before</code>、<code>mode: "transform"</code> 的插件可以返回 <code>delegate: {handler: "tools.remote"}</code>。before handler 只能选择执行方，不应在这里执行工具或产生工具副作用。宿主收齐最终参数并重新完成权限与模式检查后，才调用选中的执行 handler；<code>decision: "allow"</code> 也不能跳过检查。委托执行受原工具相同的权限边界约束，不扩大 PLAN 或 DENY 的权限。</p>
+<p>多个 hook 按原顺序处理，首个合法委托固定归属其插件、版本与 handler；后续 hook 仍可改参数或拒绝，但不能抢占执行方。执行时使用最终参数。宿主生成独立执行标识并绑定运行、工具调用与插件，不能指定其他插件。插件停用、更新、执行错误、超时或取消均不会回退本地工具。委托保留原工具卡片、进度与 started/finished 通知，但不创建本地文件修改检查点。</p>
+<p>使用 SDK 的 <code>toolDelegate</code> 包装执行 handler：异步生成器 <code>yield</code> 进度文本，<code>return</code> 最终 JSON 数据，抛异常表示失败。需要取消的网络请求、子进程等应监听 <code>signal</code> 并终止实际工作；宿主取消等待不等于能强制终止插件的任意外部副作用。</p>
+<pre><code class="language-ts">import { definePlugin, toolDelegate } from '@jieapi/plugin-sdk';
+
+definePlugin({ handlers: {
+  'hooks.route': (payload) =&gt; payload.toolName === 'readFile'
+    ? { delegate: { handler: 'tools.remote' } }
+    : {},
+  'tools.remote': toolDelegate(async function* ({ arguments: args, signal }) {
+    yield 'Reading remote file';
+    const response = await fetch(String(args.path), { signal });
+    if (!response.ok) throw new Error(`Read failed: ${response.status}`);
+    return { content: await response.text() };
+  })
+} });
+</code></pre>
+<p>非 SDK 实现使用同一 handler 的 <code>start</code> / <code>next</code> / <code>cancel</code> 操作：请求包含 <code>executionId</code>、<code>runId</code>、<code>callId</code>、<code>toolName</code>，只有 start 包含最终 <code>arguments</code>。响应必须回传相同 executionId，格式为 <code>{type: "progress", chunk}</code>、<code>{type: "pending"}</code>、<code>{type: "completed", data}</code> 或 <code>{type: "error", message}</code>。next 应长轮询约 25 秒，单次 RPC 上限 35 秒；同一 executionId 不得重复启动或并发读取。SDK 每次只拉取一个增量，限制单条进度为 64 Ki 字符，避免无界队列。完成、失败或取消后的执行标识在当前进程内保留 31 分钟用于拒绝重复启动；进程重启不保证跨进程去重，执行方仍应对外部副作用使用业务幂等标识。宿主总执行上限 30 分钟，异常或取消后最多等待 2 秒发送 cancel；SDK 通过 AbortSignal 通知执行方并清理状态。</p>
+<h2 id="代审核事件">代审核事件</h2>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>时机</th>
+<th>可返回的决定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agent.permission.review</code></td>
+<td>宿主判定为 ASK 后、弹出用户确认前</td>
+<td><code>allow</code> / <code>deny</code> / <code>pass</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>allow</code> 仅批准当前一次调用，不写入「始终允许」规则，也不改变后续调用；</li>
+<li><code>deny</code> 仅拒绝当前工具调用，返回错误码 <code>PLUGIN_REVIEW_DENIED</code>，其他工具继续审批与执行；</li>
+<li><code>pass</code> 继续询问下一个代审核插件，全部不处理才进入原有用户确认界面；</li>
+<li>插件不得修改工具参数，也不得覆盖宿主已做出的 DENY、ALLOW/自动放行或 PLAN 模式限制；</li>
+<li>全部 ASK 均已开放：Shizuku、<code>elevate</code> 提权、配置修改、删除子代理、危险 rm 均可代审；<code>planMode</code> 模式切换仍由使用者本人处理；插件不得代审自身提供的工具，也不得代审已委托给自身执行的原生工具调用。</li>
+</ul>
+<h2 id="事件内容">事件内容</h2>
+<p>所有 <code>agent.*</code> 事件均包含以下公共字段：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runId</code></td>
+<td>本轮运行的标识，同一次运行的各事件一致</td>
+</tr>
+<tr>
+<td><code>sessionId</code></td>
+<td>会话标识；主会话与子代理会话各有一个</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td><code>main</code> 或 <code>subagent</code></td>
+</tr>
+<tr>
+<td><code>agentName</code></td>
+<td>子代理名称；主会话为 null</td>
+</tr>
+<tr>
+<td><code>mode</code></td>
+<td>事件发生时的模式：<code>BUILD</code>、<code>PLAN</code> 或 <code>AUTO</code></td>
+</tr>
+</tbody>
+</table>
+<p>各事件的专属字段：</p>
+<table>
+<thead>
+<tr>
+<th>事件</th>
+<th>额外字段</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agent.run.started</code></td>
+<td><code>status=started</code>、<code>toolCalls=0</code>、<code>errorCode=null</code></td>
+</tr>
+<tr>
+<td><code>agent.run.finished</code></td>
+<td><code>status</code>（<code>success</code>/<code>error</code>/<code>cancelled</code>）、<code>toolCalls</code>、<code>errorCode</code></td>
+</tr>
+<tr>
+<td><code>agent.request.started</code></td>
+<td><code>requestId</code>、<code>messageCount</code>、<code>toolCount</code>、<code>estimatedInputTokens</code></td>
+</tr>
+<tr>
+<td><code>agent.request.finished</code></td>
+<td><code>requestId</code>、<code>status</code>、<code>inputTokens</code>、<code>outputTokens</code>、<code>toolCalls</code>、<code>durationMs</code>、<code>stopReason</code>、<code>errorCode</code></td>
+</tr>
+<tr>
+<td><code>agent.tool.started</code></td>
+<td><code>callId</code>、<code>toolName</code></td>
+</tr>
+<tr>
+<td><code>agent.tool.finished</code></td>
+<td><code>callId</code>、<code>toolName</code>、<code>status</code>（<code>success</code>/<code>error</code>）、<code>durationMs</code></td>
+</tr>
+<tr>
+<td><code>agent.compaction</code></td>
+<td><code>compacted=true</code>、<code>estimatedInputTokens</code></td>
+</tr>
+<tr>
+<td><code>app.started</code></td>
+<td><code>launchId</code>、<code>startedAt</code>、<code>appVersion</code>、<code>process</code>（不含 run/session 公共字段）</td>
+</tr>
+<tr>
+<td><code>plugin.installed</code></td>
+<td><code>pluginId</code>、<code>version</code>、<code>installedAt</code>、<code>previousVersion</code>（首次安装为 null）</td>
+</tr>
+<tr>
+<td><code>plugin.uninstalled</code></td>
+<td><code>pluginId</code>、<code>version</code></td>
+</tr>
+<tr>
+<td><code>plugin.enabled</code></td>
+<td><code>pluginId</code>、<code>version</code></td>
+</tr>
+<tr>
+<td><code>plugin.disabled</code></td>
+<td><code>pluginId</code>、<code>version</code></td>
+</tr>
+<tr>
+<td><code>backup.export.before</code></td>
+<td><code>dir</code>=<code>data://backup-export</code></td>
+</tr>
+<tr>
+<td><code>backup.import.finished</code></td>
+<td><code>dir</code>=<code>data://backup-import</code>、<code>files</code>（区段文件数）、<code>stats</code>（宿主还原统计）</td>
+</tr>
+<tr>
+<td><code>agent.tool.before</code></td>
+<td><code>callId</code>、<code>toolName</code>、<code>arguments</code></td>
+</tr>
+<tr>
+<td><code>agent.tool.after</code></td>
+<td><code>callId</code>、<code>toolName</code>、<code>status=success</code>、<code>data</code></td>
+</tr>
+<tr>
+<td><code>agent.http.before</code></td>
+<td><code>url</code>、<code>method</code>、<code>headers</code>、<code>body</code></td>
+</tr>
+<tr>
+<td><code>agent.permission.review</code></td>
+<td><code>callId</code>、<code>toolName</code>、<code>arguments</code>、<code>appForeground</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="处理事件">处理事件</h2>
+<h3 id="记录每轮运行结果">记录每轮运行结果</h3>
+<pre><code class="language-js">const handlers = {
+  'hooks.runFinished': (payload) =&gt; ({
+    logs: [`run finished ${payload.status} toolCalls=${payload.toolCalls}`]
+  })
+};
+</code></pre>
+<h3 id="拒绝危险命令">拒绝危险命令</h3>
+<pre><code class="language-js">const handlers = {
+  'hooks.guardBash': (payload) =&gt; {
+    if (payload.toolName === 'bash' &amp;&amp; /rm\s+-rf/.test(payload.arguments.command ?? '')) {
+      return {decision: 'deny', reason: '禁止递归删除'};
+    }
+    return {arguments: payload.arguments};
+  }
+};
+</code></pre>
+<p><code>decision</code> 仅可为 <code>allow</code> 或 <code>deny</code>，缺省为 <code>allow</code>。<code>arguments</code> 必须是 JSON 对象，且不得修改工具名称。</p>
+<h3 id="脱敏工具结果">脱敏工具结果</h3>
+<pre><code class="language-js">const handlers = {
+  'hooks.redactResult': (payload) =&gt; ({
+    data: {
+      text: String(payload.data?.text ?? '').replace(/ghp_[A-Za-z0-9]+/g, '***')
+    }
+  })
+};
+</code></pre>
+<p>仅可修改 <code>data</code>。<code>status</code>、图片附件、文件卡片与错误结果不可修改。</p>
+<h3 id="改写-provider-请求">改写 provider 请求</h3>
+<pre><code class="language-js">const handlers = {
+  'hooks.routeRequest': (payload) =&gt; {
+    if (!String(payload.url).includes('/chat/completions')) return {};
+    return {
+      headers: {...payload.headers, 'X-Route': 'team-a'},
+      body: JSON.stringify({...JSON.parse(payload.body), temperature: 0.2})
+    };
+  }
+};
+</code></pre>
+<p><code>headers</code> 是增量合并表：以原请求头为基底，返回的同名头覆盖原值，新头追加，未返回的头保持原值，插件不能借此删除原有头；最多 64 项，值为字符串。敏感头只有在最终 URL 与原 URL 的 scheme、host、port 完全一致，且回传值恰为 <code>{{Token}}</code> 时，才沿用真实值；返回其他值的敏感头被忽略。改写 URL 到其他 origin 时，原始敏感头会从最终请求中剥离，不会转发给第三方端点。<code>Host</code>、<code>Content-Length</code>、<code>Transfer-Encoding</code>、<code>Connection</code>、<code>Expect</code>、<code>Upgrade</code> 不允许改写。<code>body</code> 必须是合法 JSON 对象文本，最大 4 MiB；请求方法固定为 <code>POST</code>，插件不得修改。</p>
+<p>宿主仅校验 JSON 对象、大小与字段白名单，不校验 provider 语义。改写消息可能破坏工具调用配对或 Anthropic 签名；修改工具名可能与宿主工具注册表不一致；修改提示词不会同步更新 token 估算与压缩决策。插件需自行保证 body 与目标端点兼容。</p>
+<h3 id="代审核">代审核</h3>
+<pre><code class="language-js">const handlers = {
+  'hooks.reviewPermission': (payload) =&gt; {
+    if (payload.toolName === 'bash' &amp;&amp; payload.arguments.command === 'ls') {
+      return {decision: 'allow', reason: '只读列目录'};
+    }
+    return {decision: 'pass'};
+  }
+};
+</code></pre>
+<h3 id="后台审批">后台审批</h3>
+<p>需要用户在后台确认时，插件可创建 <code>visibilityPolicy: "background"</code> 的浮层并轮询 <code>host.app.isForeground</code>；App 回到前台后应返回 <code>pass</code>，将请求交回应用内确认框，避免审批持续至超时。</p>
+<h2 id="执行顺序与超时">执行顺序与超时</h2>
+<ul>
+<li>多个可写 hook 按插件 ID 升序、各自清单顺序执行，后一个 hook 读取前一个改写后的值；</li>
+<li>其余 transform hook（<code>agent.tool.before</code> / <code>agent.tool.after</code>）单次调用上限 10 秒，一次拦截合计上限 20 秒；</li>
+<li><code>agent.http.before</code> 使用独立预算：单次调用上限 3 秒，一次请求合计上限 5 秒（受 OkHttp 线程同步等待约束）；</li>
+<li>超时、异常或返回值格式不合法时跳过该 hook 并保持当前值，不会因此自动放行或拒绝；</li>
+<li>同一 <code>pluginId/localId</code> 的 hook 连续 3 次调用失败或超时后熔断 60 秒，期间跳过该 hook；成功后计数清零，冷却结束后的首次调用作为半开尝试；<code>agent.permission.review</code> 的 allow/deny/pass 结果不算失败，只有调用本身失败才累计；</li>
+<li>代审核同样顺序执行，首个 <code>allow</code>/<code>deny</code> 生效；单次最多等待 5 分钟、总预算 5 分钟；超时或异常按 <code>pass</code> 继续，最终无人处理时回到用户确认；</li>
+<li>只读 hook 异步派发，不进入 Agent 主流程；单项超时为 30 秒，超时将关闭该插件的运行时；同时执行的 hook 运行时调用最多 8 个，等待并发额度也计入各自超时预算；连续失败不会自动停用插件。</li>
+</ul>
+<h2 id="调试输出">调试输出</h2>
+<p>handler 可返回 <code>logs</code> 写入应用日志，格式与限额见 <a href="tools-runtime.html#handler-约定">handler 约定</a>。可写 Hook 的 <code>decision</code>、<code>arguments</code>、<code>data</code>、<code>url</code>、<code>headers</code>、<code>body</code> 与 <code>logs</code> 可同时返回；代审核的 <code>decision</code>、<code>reason</code> 与 <code>logs</code> 可同时返回。</p>
+<p>Transform Hook 不批准工具或绕过模式限制，改写参数后仍由宿主重新判断权限。代审核属于高权限能力，仅应启用可信插件。</p></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../../assets/nav-data.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AI 工具与插件运行时 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../../assets/manual.css">
+</head>
+<body data-root="../../" data-page="advanced/plugin/tools-runtime.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../../index.html"><img src="../../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><h1 id="ai-工具与插件运行时">AI 工具与插件运行时</h1>
+<p>AI 工具使模型能够调用插件自身代码，同一运行时还可响应 Hook 和页面调用。推荐用 TypeScript + SDK 注册 handler，源码写法见<a href="source-build.html#运行时与-sdk">运行时与 SDK</a>；本篇说明工具行为、宿主接口与底层协议。</p>
+<h2 id="声明工具">声明工具</h2>
+<p>在 <code>contributes.tools</code> 中声明 <code>handler</code> 和 <code>inputSchema</code>，并提供 <code>runtime</code>；字段写法见<a href="manifest.html#tools">工具清单</a>。</p>
+<p><code>inputSchema</code> 指向包内 JSON 文件，例如 <code>schemas/echo.input.json</code>：</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;text&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;要回显的文本&quot;}
+  },
+  &quot;required&quot;: [&quot;text&quot;]
+}
+</code></pre>
+<p><code>handler</code> 是入口脚本 handler 表中的键。工具对 AI 暴露的名称由宿主生成：</p>
+<pre><code class="language-text">plugin__&lt;清洗后的插件ID&gt;__&lt;清洗后的工具id&gt;
+</code></pre>
+<p>例如 <code>demo.hello</code> 的 <code>echo</code> 显示为 <code>plugin__demo_hello__echo</code>。点号及其他非法字符将被替换为下划线，插件不可覆盖内置工具名称。</p>
+<p>首次调用会显示工具授权提示；PLAN 模式下按外部工具拦截。每次调用都会重新执行权限判断，不会因上次批准而放行。</p>
+<h2 id="运行时入口">运行时入口</h2>
+<p><code>runtime</code> 支持：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>启动命令</th>
+<th>入口后缀</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>javascript</code></td>
+<td><code>node &lt;entry&gt;</code></td>
+<td><code>.js</code>、<code>.mjs</code>、<code>.cjs</code></td>
+</tr>
+<tr>
+<td><code>python</code></td>
+<td><code>python3 &lt;entry&gt;</code></td>
+<td><code>.py</code></td>
+</tr>
+</tbody>
+</table>
+<p>可使用 <code>command</code> 覆盖启动命令；数组直接交给 <code>execve</code>，不经 shell。入口文件最大 512 KiB，工作目录为插件自身的安装目录。</p>
+<p><code>resident: true</code> 表示进程不参与 10 分钟空闲回收。插件停用、卸载、版本替换或 App 进程结束时仍会关闭。常驻进程会持续占用内存和容器资源，仅在确需常驻服务时启用。</p>
+<p>工具调用单次超时为 120 秒。超时或进程异常将结束该次调用并返回工具错误；常驻进程不会因该次超时被直接终止。</p>
+<h2 id="进程协议">进程协议</h2>
+<p>TypeScript SDK 负责消息收发；使用其他语言或自行接入协议时，宿主与插件均按行读写 JSON，一行一条消息，不可跨行。</p>
+<p>宿主发往插件：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tool.invoke</code></td>
+<td><code>{handler, args}</code></td>
+<td>执行 AI 工具</td>
+</tr>
+<tr>
+<td><code>hook.invoke</code></td>
+<td><code>{handler, args}</code></td>
+<td>执行生命周期 hook</td>
+</tr>
+<tr>
+<td><code>ui.invoke</code></td>
+<td><code>{handler, args}</code></td>
+<td>页面通过 <code>minibot.invoke</code> 调用进程</td>
+</tr>
+<tr>
+<td><code>backend.invoke</code></td>
+<td><code>{handler, args}</code></td>
+<td>执行后端文件、命令、终端与工作区操作</td>
+</tr>
+<tr>
+<td><code>workflow.invoke</code></td>
+<td><code>{handler, args}</code></td>
+<td>执行 Agent 工作流轮次、取消、压缩或标题生成</td>
+</tr>
+</tbody>
+</table>
+<p>插件使用同一条 <code>id</code> 返回 <code>result</code> 或 <code>error</code>：</p>
+<pre><code class="language-json">{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;result&quot;:{&quot;text&quot;:&quot;hello&quot;}}
+{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:2,&quot;error&quot;:{&quot;code&quot;:&quot;PLUGIN_ERROR&quot;,&quot;message&quot;:&quot;something failed&quot;}}
+</code></pre>
+<p>进程调用宿主使用 <code>host.*</code> 请求，SDK 的 <code>hostCall</code> 会生成 <code>id</code> 并匹配响应。自行实现协议时，也需要区分响应与通知。</p>
+<p>页面事件使用 SDK 的 <code>emit</code>，用法见<a href="ui-components.html#插件事件">插件事件</a>。自行实现运行时时，按行输出不带 <code>id</code> 的通知：</p>
+<pre><code class="language-json">{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;plugin.event&quot;,&quot;params&quot;:{&quot;name&quot;:&quot;records.changed&quot;,&quot;payload&quot;:{&quot;count&quot;:4}}}
+</code></pre>
+<h3 id="uds-二进制通道">UDS 二进制通道</h3>
+<p>对于高吞吐场景（<code>executionBackends</code> 文件字节传输、流式命令输出、<code>pty</code> 终端以及 <code>workflows</code> 流式事件），宿主在启动插件进程时会通过环境变量注入 Unix Domain Socket（<code>AF_UNIX</code>）通道参数：</p>
+<table>
+<thead>
+<tr>
+<th>环境变量</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MINIBOT_IPC_SOCKET</code></td>
+<td>容器内 Unix Domain Socket 文件路径</td>
+</tr>
+<tr>
+<td><code>MINIBOT_IPC_TOKEN</code></td>
+<td>建连首帧握手用的鉴权令牌</td>
+</tr>
+</tbody>
+</table>
+<p>使用 <code>@jieapi/plugin-sdk</code> 的 <code>definePlugin(...)</code> 时，SDK 会自动在 <code>MINIBOT_IPC_SOCKET</code> 创建监听服务端并在就绪后向 <code>stdout</code> 发送 <code>{"jsonrpc":"2.0","method":"ipc.ready","params":{"socket":...}}</code>。宿主连接后立即发送 <code>PING</code> 帧携带 <code>{"token": "..."}</code>，校验通过后回复 <code>PONG</code> 完成握手；此后 <code>hostCall</code>、<code>emit</code> 与 <code>backend.invoke</code> / <code>workflow.invoke</code> 均优先复用该二进制通道，未连接或通道不可用时无缝回退到 <code>stdin</code>/<code>stdout</code> NDJSON。</p>
+<p>二进制帧采用 16 字节大端（Big-Endian）帧头，将调度元数据与原始二进制载荷分离（免去 Base64 编码与 JSON 转义开销）：</p>
+<pre><code class="language-text">+------------+---------+------+----------+----------+------------+-------------------+-------------------+
+| Magic (2B) | Ver(1B) | Type | StreamId | MetaLen  | PayloadLen | Meta (UTF-8 JSON) | Payload (Raw)     |
+| 0x4143     | 0x01    | 1B   | 4B (u32) | 4B (u32) | 4B (u32)   | MetaLen bytes     | PayloadLen bytes  |
++------------+---------+------+----------+----------+------------+-------------------+-------------------+
+</code></pre>
+<ul>
+<li><strong>帧类型（<code>Type</code>）</strong>：<code>REQ (1)</code>、<code>RESP (2)</code>、<code>ERR (3)</code>、<code>STREAM_DATA (4)</code>、<code>STREAM_END (5)</code>、<code>EVENT (6)</code>、<code>PING (7)</code>、<code>PONG (8)</code>。</li>
+<li><strong>分片与限额</strong>：<code>Meta</code> 上限 <code>1 MiB</code>，单帧 <code>Payload</code> 上限 <code>16 MiB</code>，默认分片大小 <code>64 KiB</code>。大流量按 <code>StreamId</code> 多路复用并与控制帧分队列写出，避免文件读写或日志流阻塞取消、审批等控制请求。</li>
+<li><strong>SDK 辅助能力</strong>：可使用 <code>binaryResult(payload, meta)</code> 直接返回 <code>Uint8Array</code> 二进制载荷；<code>workflow.invoke</code> handler 支持返回异步生成器（<code>async function*</code>）逐条 <code>yield</code> 工作流事件；高频增量输出可使用 <code>createEventCoalescer</code> 进行微批合并。</li>
+</ul>
+<h2 id="host-api-细节">host API 细节</h2>
+<p>进程侧统一通过 <code>hostCall('host.方法', {参数})</code> 调用；页面桥的部分方法使用位置参数，不能直接照搬调用形式。</p>
+<p>方法名与入参在 SDK 里有类型声明（<code>@jieapi/plugin-sdk</code> 的 <code>HostMethodMap</code>）：不写泛型时，方法名有补全、拼错会在编译期报错，参数与返回值自动推导；需要自己指定返回类型时仍可写 <code>hostCall&lt;T&gt;('host.方法', {参数})</code>，这种写法只校验字段名与字段类型，不校验字段与方法是否对应——能用推导就别写泛型。</p>
+<p>自行实现协议时，方法名以宿主实际支持为准，写错会在运行期返回 <code>METHOD_UNKNOWN</code>。下表与 SDK 声明一一对应。</p>
+<h3 id="方法废弃与迁移">方法废弃与迁移</h3>
+<p>宿主移除某个 <code>host.*</code> 方法前会先标废弃：插件仍能编译、调用仍然有效，但编辑器会在调用处标删除线，悬停能看到取代它的方法与计划移除的版本（<code>1.4.0</code> 这种）。看到这类提示请尽快迁移：要到后续版本宿主才真正删除分支，那之后调用返回 <code>METHOD_UNKNOWN</code>。</p>
+<p><code>engines.pluginApi</code> 不会跟着单个方法的废弃升高——只废弃一两个方法却在清单上报不兼容，会连带拒绝只用其他 API 的插件，所以废弃走方法级过渡，不靠整体版本门禁。</p>
+<h3 id="文件">文件</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>参数</th>
+<th>返回 / 限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host.fs.read</code></td>
+<td><code>{path}</code></td>
+<td><code>{content, size}</code>；单次最多 512 KiB</td>
+</tr>
+<tr>
+<td><code>host.fs.write</code></td>
+<td><code>{path, content}</code></td>
+<td>原子写；内容最多 1 MiB</td>
+</tr>
+<tr>
+<td><code>host.fs.list</code></td>
+<td><code>{path}</code></td>
+<td><code>{entries: [{name, isDir, size}]}</code>；最多 500 条</td>
+</tr>
+<tr>
+<td><code>host.fs.stat</code></td>
+<td><code>{path}</code></td>
+<td><code>{exists, isDir, size}</code></td>
+</tr>
+<tr>
+<td><code>host.fs.delete</code></td>
+<td><code>{path}</code></td>
+<td>删除文件或目录</td>
+</tr>
+<tr>
+<td><code>host.fs.mkdir</code></td>
+<td><code>{path}</code></td>
+<td>创建目录（含父目录）</td>
+</tr>
+<tr>
+<td><code>host.fs.rename</code></td>
+<td><code>{from, to}</code></td>
+<td>移动/重命名；目标存在返回 <code>FILE_EXISTS</code></td>
+</tr>
+<tr>
+<td><code>host.fs.copy</code></td>
+<td><code>{from, to, overwrite?}</code></td>
+<td>复制文件或目录；<code>overwrite</code> 默认 false</td>
+</tr>
+<tr>
+<td><code>host.fs.append</code></td>
+<td><code>{path, content}</code></td>
+<td>追加文本；总大小不超过 1 MiB</td>
+</tr>
+<tr>
+<td><code>host.fs.readBinary</code></td>
+<td><code>{path}</code></td>
+<td><code>{base64, size}</code>；单次最多 512 KiB</td>
+</tr>
+<tr>
+<td><code>host.fs.writeBinary</code></td>
+<td><code>{path, base64}</code></td>
+<td>Base64 写入；解码后最多 1 MiB</td>
+</tr>
+</tbody>
+</table>
+<p>宿主文件接口的路径规则与<a href="ui-pages.html#文件">页面文件接口</a>相同，支持真实路径、<code>~</code> 和 <code>data://</code>。进程另有 <code>MINIBOT_DATA_DIR</code> 与 <code>MINIBOT_WORKSPACE</code> 环境变量；SSH 模式下，<code>host.fs.*</code> 操作远端路径，进程自身的文件操作仍发生在手机容器。</p>
+<h3 id="命令与终端">命令与终端</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>参数</th>
+<th>返回 / 限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host.bash</code></td>
+<td><code>{command, timeout?}</code></td>
+<td><code>{output, exitCode, truncated}</code>；默认 30 秒，范围 1–300 秒；命令最长 4000 字符</td>
+</tr>
+<tr>
+<td><code>host.terminal.run</code></td>
+<td><code>{command, title?}</code></td>
+<td><code>{tabId, state}</code>；命令最长 4000 字符</td>
+</tr>
+<tr>
+<td><code>host.terminal.poll</code></td>
+<td><code>{tabId, offset}</code></td>
+<td><code>{output, offset, state, exitCode?, truncated}</code>；仅保留最近 128 KiB</td>
+</tr>
+<tr>
+<td><code>host.terminal.stop</code></td>
+<td><code>{tabId}</code></td>
+<td>发送 Ctrl-C，2 秒未退出则关闭</td>
+</tr>
+<tr>
+<td><code>host.terminal.close</code></td>
+<td><code>{tabId}</code></td>
+<td>关闭标签</td>
+</tr>
+<tr>
+<td><code>host.terminal.write</code></td>
+<td><code>{tabId, text, appendNewline?}</code></td>
+<td>向标签写入输入；文本最多 4000 字符</td>
+</tr>
+<tr>
+<td><code>host.terminal.list</code></td>
+<td>无</td>
+<td>列出该插件自己的标签 <code>{tabId, title, command, state}</code></td>
+</tr>
+</tbody>
+</table>
+<p>终端标签的归属、显示和生命周期与<a href="ui-pages.html#命令与终端">页面终端接口</a>相同。</p>
+<h3 id="会话与消息">会话与消息</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>参数</th>
+<th>返回 / 限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host.chat.listSessions</code></td>
+<td><code>{includeSubagents?, limit?}</code></td>
+<td><code>{sessions}</code>；仅当前工作区，<code>limit</code> 默认 50、上限 200</td>
+</tr>
+<tr>
+<td><code>host.chat.createSession</code></td>
+<td><code>{title?, mode?}</code></td>
+<td><code>{session}</code>；<code>mode</code> 仅 <code>build</code> / <code>plan</code></td>
+</tr>
+<tr>
+<td><code>host.chat.listMessages</code></td>
+<td><code>{sessionId, limit?, before?, after?}</code></td>
+<td><code>{sessionId, messages, hasMore}</code>；<code>before</code> / <code>after</code> 互斥</td>
+</tr>
+<tr>
+<td><code>host.chat.sendMessage</code></td>
+<td><code>{sessionId, text}</code></td>
+<td><code>{sessionId, accepted}</code>；启动普通 AI 轮次，需要聊天页存活</td>
+</tr>
+<tr>
+<td><code>host.chat.setDraft</code></td>
+<td><code>{text, sessionId?, append?}</code></td>
+<td><code>{sessionId?, accepted}</code>；写入输入框，<code>append</code> 为 true 时追加，需要聊天页存活</td>
+</tr>
+<tr>
+<td><code>host.chat.stop</code></td>
+<td><code>{sessionId}</code></td>
+<td><code>{sessionId, accepted}</code>；停止该会话的 AI 轮次</td>
+</tr>
+<tr>
+<td><code>host.chat.openSession</code></td>
+<td><code>{sessionId}</code></td>
+<td><code>{sessionId, accepted}</code>；切换聊天页当前会话</td>
+</tr>
+<tr>
+<td><code>host.chat.getSession</code></td>
+<td><code>{sessionId}</code></td>
+<td><code>{session}</code></td>
+</tr>
+<tr>
+<td><code>host.chat.renameSession</code></td>
+<td><code>{sessionId, title}</code></td>
+<td>重命名；标题最多 100 字</td>
+</tr>
+<tr>
+<td><code>host.chat.pinSession</code></td>
+<td><code>{sessionId, pinned}</code></td>
+<td>置顶/取消置顶</td>
+</tr>
+<tr>
+<td><code>host.chat.deleteSession</code></td>
+<td><code>{sessionId}</code></td>
+<td>删除会话；需要聊天页存活</td>
+</tr>
+<tr>
+<td><code>host.chat.getRunState</code></td>
+<td><code>{sessionId}</code></td>
+<td><code>{sessionId, run}</code></td>
+</tr>
+<tr>
+<td><code>host.chat.waitForRun</code></td>
+<td><code>{sessionId, timeoutMs?}</code></td>
+<td><code>{timedOut, run}</code>；默认 120 秒，范围 1–600 秒</td>
+</tr>
+<tr>
+<td><code>host.chat.listApprovals</code></td>
+<td><code>{sessionId}</code></td>
+<td><code>{tool, question, plan}</code></td>
+</tr>
+<tr>
+<td><code>host.chat.resolveToolApproval</code></td>
+<td><code>{sessionId, requestId, choice}</code></td>
+<td><code>once</code> / <code>always</code> / <code>reject</code></td>
+</tr>
+<tr>
+<td><code>host.chat.resolveQuestion</code></td>
+<td><code>{sessionId, requestId, answers}</code></td>
+<td>回答 <code>AskUserQuestion</code></td>
+</tr>
+<tr>
+<td><code>host.chat.resolvePlanApproval</code></td>
+<td><code>{sessionId, requestId, choice}</code></td>
+<td><code>approve</code> / <code>refine</code></td>
+</tr>
+</tbody>
+</table>
+<p>会话范围、消息格式、运行状态与审批行为见<a href="ui-pages.html#会话与消息">页面会话接口</a>。进程侧可用 <code>host.chat.waitForRun</code> 或 <code>agent.run.finished</code> Hook 等待结果；<code>sendMessage</code> 仅表示入队，不等待 AI 完成。<code>sendMessage</code> / <code>stop</code> / <code>openSession</code> / <code>deleteSession</code> 需要聊天页存活，否则返回 <code>CHAT_UI_UNAVAILABLE</code>。</p>
+<h3 id="系统密钥与网络">系统、密钥与网络</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>参数</th>
+<th>返回 / 限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host.notify</code></td>
+<td><code>{title, body, key?}</code></td>
+<td>标题最多 100 字，正文最多 1000 字，<code>key</code> 最多 64 字；同一 <code>key</code> 覆盖上一条</td>
+</tr>
+<tr>
+<td><code>host.tip</code></td>
+<td><code>{title?, text, action?{label, handler}}</code></td>
+<td>标题最多 80 字，正文最多 500 字，按钮文字最多 24 字；同插件仅保留最新一条，队列最多 3 条</td>
+</tr>
+<tr>
+<td><code>host.app.isForeground</code></td>
+<td>无</td>
+<td>App 是否有 Activity 处于 STARTED</td>
+</tr>
+<tr>
+<td><code>host.clipboard.read</code> / <code>write</code></td>
+<td><code>{}</code> / <code>{text}</code></td>
+<td>剪贴板文本，上限 1 MiB</td>
+</tr>
+<tr>
+<td><code>host.share.text</code></td>
+<td><code>{text, title?}</code></td>
+<td>拉起系统分享；文本最多 100000 字符</td>
+</tr>
+<tr>
+<td><code>host.ui.openUrl</code></td>
+<td><code>{url}</code></td>
+<td>仅 http/https，最长 4096 字符</td>
+</tr>
+<tr>
+<td><code>host.app.info</code></td>
+<td>无</td>
+<td>包名、版本、SDK、语言、前后台</td>
+</tr>
+<tr>
+<td><code>host.log</code></td>
+<td><code>{level, message, tag?}</code></td>
+<td>写宿主日志；正文最多 2000 字符</td>
+</tr>
+<tr>
+<td><code>host.secrets.get</code> / <code>set</code> / <code>delete</code></td>
+<td><code>{key}</code> / <code>{key, value}</code> / <code>{key}</code></td>
+<td>加密键值；值最多 64 KiB</td>
+</tr>
+<tr>
+<td><code>host.secrets.list</code></td>
+<td>无</td>
+<td><code>{keys}</code>，只返回键名</td>
+</tr>
+<tr>
+<td><code>host.http.request</code></td>
+<td><code>{url, method?, headers?, body?, timeout?}</code></td>
+<td><code>{status, headers, body, truncated}</code>；不跟随重定向、不注入凭据</td>
+</tr>
+</tbody>
+</table>
+<p><code>host.http.request</code> 只接受 http/https；URL 最长 4096 字符，headers 最多 64 项且禁止 Host/Content-Length 等受控头，请求体与响应体各最多 1 MiB，超时 1–60 秒。</p>
+<h3 id="工具与-mcp">工具与 MCP</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>参数</th>
+<th>返回 / 限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host.tools.list</code></td>
+<td><code>{includeSchema?}</code></td>
+<td><code>{tools}</code>；最多 200 项，描述最多 500 字符；<code>includeSchema</code> 为 true 时附带参数 schema</td>
+</tr>
+<tr>
+<td><code>host.tools.execute</code></td>
+<td><code>{name, arguments, sessionId?, context?, timeoutMs?}</code></td>
+<td>工具结果；只允许内置 / MCP 工具，ASK 时挂起等待审批</td>
+</tr>
+<tr>
+<td><code>host.tools.pending</code></td>
+<td><code>{sessionId?}</code></td>
+<td><code>{approval}</code>；没有待审批请求时 <code>approval</code> 为 <code>null</code></td>
+</tr>
+<tr>
+<td><code>host.tools.resolve</code></td>
+<td><code>{requestId, choice}</code></td>
+<td><code>{ok}</code>；<code>choice</code> 为 <code>once</code> / <code>always</code> / <code>reject</code></td>
+</tr>
+<tr>
+<td><code>host.mcp.status</code></td>
+<td>无</td>
+<td><code>{servers}</code> 连接状态</td>
+</tr>
+</tbody>
+</table>
+<h3 id="专用能力接口">专用能力接口</h3>
+<table>
+<thead>
+<tr>
+<th>接口</th>
+<th>参考文档</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host.model.*</code>：模型列表、句柄与流式请求</td>
+<td><a href="model-handles.html#页面与进程接口">模型句柄与流式调用</a></td>
+</tr>
+<tr>
+<td><code>host.providers.*</code>：维护本插件提供商的模型与凭据</td>
+<td><a href="shizuku-providers.html#由插件维护模型与凭据">模型与凭据维护</a></td>
+</tr>
+<tr>
+<td><code>host.shizuku.exec</code>：Android 系统命令</td>
+<td><a href="shizuku-providers.html#shizuku">Shizuku</a></td>
+</tr>
+<tr>
+<td><code>host.overlay.*</code>：系统浮层管理与消息</td>
+<td><a href="overlay.html#进程接口">进程接口</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="端口映射">端口映射</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>参数</th>
+<th>返回 / 限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host.ports.forward</code></td>
+<td><code>{port, host?, localPort?}</code></td>
+<td><code>{id, localPort, remoteHost, remotePort, url, direct}</code>；<code>host</code> 默认 <code>127.0.0.1</code>，<code>localPort</code> 被占用时向后顺延，以返回值为准</td>
+</tr>
+<tr>
+<td><code>host.ports.close</code></td>
+<td><code>{id}</code></td>
+<td><code>{closed}</code>；只能关闭本插件建立的映射</td>
+</tr>
+<tr>
+<td><code>host.ports.list</code></td>
+<td>无</td>
+<td>本插件的映射数组</td>
+</tr>
+</tbody>
+</table>
+<p><code>host.ports.forward</code> 把远程服务器视角的 <code>host:port</code> 映射到手机 <code>127.0.0.1:localPort</code>，复用宿主已建立的 SSH 连接，插件不接触服务器凭据。仅绑定 <code>127.0.0.1</code>，不向局域网暴露；同一插件重复映射同一目标会复用原映射；每插件最多 8 条、全局 32 条。</p>
+<p>本地容器模式下容器与 App 处于同一网络命名空间，无需隧道：返回 <code>direct: true</code>，<code>url</code> 可直接访问。SSH 模式下建隧道前会先探测目标，目标未监听或服务器 <code>AllowTcpForwarding no</code> 时立即返回 <code>TARGET_UNREACHABLE</code>；连接断开或切换执行环境时宿主统一回收映射，不会跨连接残留。</p>
+<h3 id="工作区与外部会话">工作区与外部会话</h3>
+<p>声明了 <code>contributes.executionBackends</code> 或 <code>contributes.sessions</code> 的已激活插件，可通过以下方法增量维护自己的工作区与外部会话分组（<code>backendId</code> / <code>sourceId</code> 必须归属当前插件，支持本地 ID 或 <code>&lt;插件ID&gt;:&lt;局部ID&gt;</code>）：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host.workspaces.upsert</code></td>
+<td><code>{backendId, workspaces}</code></td>
+<td>按必填的工作区 <code>id</code> 增量插入或更新工作区；单次最多 500 条</td>
+</tr>
+<tr>
+<td><code>host.workspaces.remove</code></td>
+<td><code>{backendId, workspaceIds}</code></td>
+<td>按 ID 批量移除该执行后端下的工作区</td>
+</tr>
+<tr>
+<td><code>host.workspaces.set</code></td>
+<td><code>{backendId, workspaces}</code></td>
+<td>全量替换该执行后端下的工作区列表</td>
+</tr>
+<tr>
+<td><code>host.sessions.upsert</code></td>
+<td><code>{sourceId, sessions}</code></td>
+<td>按 <code>sessionId</code> 增量新增或更新外部会话摘要（局部 Diff 更新）</td>
+</tr>
+<tr>
+<td><code>host.sessions.remove</code></td>
+<td><code>{sourceId, sessionIds}</code></td>
+<td>按 <code>sessionId</code> 批量移除指定外部会话</td>
+</tr>
+<tr>
+<td><code>host.sessions.replaceAll</code></td>
+<td><code>{sourceId, sessions}</code></td>
+<td>全量替换该会话源的会话列表（首次拉取或重同步使用）</td>
+</tr>
+<tr>
+<td><code>host.sessions.setLoading</code></td>
+<td><code>{sourceId, loading}</code></td>
+<td>设置外部会话分组的加载指示状态</td>
+</tr>
+<tr>
+<td><code>host.sessions.setError</code></td>
+<td><code>{sourceId, error}</code></td>
+<td>设置或清除外部会话分组的错误提示（传 <code>null</code> 清除）</td>
+</tr>
+<tr>
+<td><code>host.sessions.setThinking</code></td>
+<td><code>{sourceId, sessionId, visible, text?}</code></td>
+<td>控制外部会话聊天页的等待思考气泡展示与文案</td>
+</tr>
+</tbody>
+</table>
+<p><code>workspaces</code> 数组中的每个 <code>WorkspaceItem</code> 包含必填的 <code>id</code>、<code>name</code>、<code>path</code>，以及可选的 <code>group</code>、<code>available</code>（默认 <code>true</code>）和嵌套的 <code>capabilities</code>（可选布尔字段 <code>createChild</code>、<code>delete</code>、<code>git</code>），能力字段不能平铺在条目顶层。例如：</p>
+<pre><code class="language-json">{
+  &quot;backendId&quot;: &quot;cloud-box&quot;,
+  &quot;workspaces&quot;: [{
+    &quot;id&quot;: &quot;demo&quot;,
+    &quot;name&quot;: &quot;Demo&quot;,
+    &quot;path&quot;: &quot;/srv/demo&quot;,
+    &quot;group&quot;: &quot;cloud&quot;,
+    &quot;available&quot;: true,
+    &quot;capabilities&quot;: { &quot;createChild&quot;: true, &quot;delete&quot;: false, &quot;git&quot;: true }
+  }]
+}
+</code></pre>
+<p>移除条目使用 <code>host.workspaces.remove({backendId: 'cloud-box', workspaceIds: ['demo']})</code>，参数名不是 <code>ids</code>。<code>host.sessions.setThinking</code> 的 <code>visible</code> 是必填布尔值。</p>
+<p>外部会话摘要可关联 <code>workflowId</code>、<code>backendId</code>、<code>workspaceId</code> 等元数据，供用户在聊天页继续发送消息时由宿主路由到对应工作流。<code>readMessages</code> 返回消息的时间字段为 <code>createdAt</code>，分页的 <code>nextCursor</code> 可为任意 JSON 值（对象、数组、字符串、数字、布尔或 <code>null</code>），下一页读取时由宿主原样传入 <code>cursor</code>，不要自行转为字符串：</p>
+<pre><code class="language-json">{
+  &quot;messages&quot;: [{
+    &quot;id&quot;: &quot;m1&quot;,
+    &quot;role&quot;: &quot;assistant&quot;,
+    &quot;createdAt&quot;: 1700000000000,
+    &quot;blocks&quot;: [{ &quot;type&quot;: &quot;text&quot;, &quot;text&quot;: &quot;Hello&quot; }]
+  }],
+  &quot;hasMore&quot;: true,
+  &quot;nextCursor&quot;: { &quot;page&quot;: 2, &quot;boundary&quot;: [&quot;m1&quot;, 123] }
+}
+</code></pre>
+<h3 id="执行后端-handler-参数">执行后端 handler 参数</h3>
+<p>后端调用通过 <code>backend.invoke</code> 分发，<code>args.backendId</code> 为后端完整 ID。后端 <code>fs</code> handler 与插件调用的 <code>host.fs.*</code> 是两套不同接口，不要混用操作名或参数。</p>
+<p><code>fs</code> 的正式 <code>op</code> 为 <code>readFile</code>、<code>writeFile</code>、<code>readBytes</code>、<code>writeBytes</code>、<code>listFiles</code>、<code>listFilesRecursive</code>、<code>stat</code>、<code>fingerprint</code>、<code>permissions</code>、<code>resolvePath</code>、<code>delete</code>、<code>deleteRecursively</code>、<code>rename</code>、<code>copy</code>、<code>move</code>、<code>mkdirs</code>。所有操作都带 <code>path</code>；其余参数为：</p>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>额外参数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>writeFile</code></td>
+<td><code>overwrite: boolean</code>、<code>encoding: string</code>；内容通过二进制 payload 传输</td>
+</tr>
+<tr>
+<td><code>writeBytes</code></td>
+<td><code>overwrite: boolean</code>；字节通过二进制 payload 传输</td>
+</tr>
+<tr>
+<td><code>readBytes</code></td>
+<td>可选 <code>maxBytes: number</code></td>
+</tr>
+<tr>
+<td><code>listFilesRecursive</code></td>
+<td><code>maxDepth: number</code></td>
+</tr>
+<tr>
+<td><code>resolvePath</code></td>
+<td><code>followFinalLink: boolean</code></td>
+</tr>
+<tr>
+<td><code>rename</code></td>
+<td><code>newPath: string</code></td>
+</tr>
+<tr>
+<td><code>copy</code>、<code>move</code></td>
+<td><code>newPath: string</code>、<code>overwrite: boolean</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>permissions</code> 属于正式操作名；当前宿主读取权限时从 <code>stat</code> 返回的 <code>permissions</code> 字段取值。<code>readFile</code> / <code>readBytes</code> 可通过二进制 payload 返回内容，<code>stat</code> / <code>listFiles</code> 等元数据操作返回 JSON。文件监听与插件后端端口转发当前未开放，清单 <code>fileWatch</code> / <code>portForward</code> 只能省略或为 <code>false</code>，不能通过声明 <code>true</code> 启用。</p>
+<p><code>exec</code> 与 <code>execStream</code> 收到 <code>{backendId, command, projectPath?, timeoutMs, unbounded?}</code>；工作目录字段为 <code>projectPath</code>，超时单位为毫秒。<code>unbounded: true</code> 表示同步执行请求扩大输出限制，不代表无限超时。同步结果为 <code>{output, exitCode, truncated?}</code>；流式命令返回文本块，退出帧使用 <code>{type: 'exit', exitCode}</code>。</p>
+<p><code>terminal</code> 当前操作为 <code>start</code>、<code>status</code>、<code>send</code>、<code>write</code>、<code>writeBytes</code>、<code>read</code>、<code>stream</code>、<code>list</code>、<code>close</code>。<code>start</code> 使用 <code>command</code>、可选 <code>title</code> / <code>notify</code> / <code>sourceSessionId</code> / <code>ownerPluginId</code>；除 <code>start</code> / <code>list</code> 外均使用 <code>tabId</code>，<code>send</code> 还需要 <code>input</code> 与 <code>appendNewline</code>，<code>write</code> 需要 <code>text</code>，<code>writeBytes</code> 使用二进制 payload。不要使用未开放的 <code>open</code> / <code>resize</code> 等操作。</p>
+<h3 id="工具目录与代执行">工具目录与代执行</h3>
+<p><code>host.tools.list({includeSchema?})</code> 返回宿主注册的工具：<code>name</code>、<code>description</code>、<code>type</code>（<code>builtin</code> / <code>mcp</code> / <code>plugin</code>）、<code>permissionPolicy</code>（如 <code>ask</code>、<code>auto_approve</code>）与 <code>capabilities</code>。<code>includeSchema: true</code> 时额外返回 <code>inputSchema</code>；单个 schema 超过 64 KiB 或累计超过 256 KiB 时省略该项，不会报错。最多返回 200 项。</p>
+<p><code>host.tools.execute({name, arguments, sessionId?, context?, timeoutMs?})</code> 把一次工具调用交给宿主：</p>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>工具范围</td>
+<td>只允许内置与 MCP 工具；<code>plugin__</code> 前缀返回 <code>TOOL_NOT_ALLOWED</code>，未知工具返回 <code>TOOL_NOT_FOUND</code></td>
+</tr>
+<tr>
+<td>会话型工具</td>
+<td><code>askUserQuestion</code>、<code>planMode</code>、<code>goalStatus</code>、<code>todo</code>、<code>task</code>、<code>messageParent</code> 依赖聊天会话，经此执行返回 <code>TOOL_NOT_ALLOWED</code></td>
+</tr>
+<tr>
+<td>会话命名空间</td>
+<td><code>sessionId</code> 缺省 <code>plugin:&lt;插件ID&gt;</code>，只能使用该会话或它的 <code>:</code> 子会话，其它值返回 <code>SESSION_FORBIDDEN</code></td>
+</tr>
+<tr>
+<td>上下文</td>
+<td><code>context</code> 支持 <code>path</code>、<code>selection</code>、<code>language</code>；<code>projectRoot</code> 始终是当前工作区</td>
+</tr>
+<tr>
+<td>超时</td>
+<td><code>timeoutMs</code> 默认 120000，范围 1000–600000，同时约束等待授权与执行本身</td>
+</tr>
+<tr>
+<td>结果</td>
+<td><code>{status, data?, message?, code?, images?, imagesTruncated?, dataTruncated?}</code>；<code>status</code> 为 <code>success</code> / <code>error</code> / <code>partial</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>data</code> 超过 256 KiB 时转为截断字符串并带 <code>dataTruncated: true</code>；结果图片为 <code>{mimeType, base64, path?}</code>，单图超过 1.5 MiB 或合计超过 2 MiB 时整张省略并带 <code>imagesTruncated: true</code>。<code>arguments</code> 超过 2 MiB 返回 <code>PARAM_INVALID</code>。</p>
+<p>权限策略判定为 ASK 时，<code>execute</code> 挂起等待确认，请求不进入聊天页弹窗队列，也不会点亮侧边栏等待指示。插件需轮询 <code>host.tools.pending({sessionId})</code>，由自己的页面展示 <code>approval</code>：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>请求 ID，传给 <code>resolve</code></td>
+</tr>
+<tr>
+<td><code>toolName</code></td>
+<td>工具名</td>
+</tr>
+<tr>
+<td><code>title</code> / <code>summary</code></td>
+<td>标题与摘要</td>
+</tr>
+<tr>
+<td><code>details</code> / <code>argsPreview</code></td>
+<td>详细信息与参数预览，各最多 4000 字符</td>
+</tr>
+<tr>
+<td><code>sessionId</code></td>
+<td>发起请求的插件会话</td>
+</tr>
+<tr>
+<td><code>rememberablePatterns</code></td>
+<td>可记住的授权范围；为空时不展示「始终允许」</td>
+</tr>
+<tr>
+<td><code>rememberDisabledReason?</code></td>
+<td>不能记住时的原因</td>
+</tr>
+</tbody>
+</table>
+<p>使用者点击后调用 <code>host.tools.resolve({requestId, choice})</code>，<code>choice</code> 为 <code>once</code> / <code>always</code> / <code>reject</code>；<code>always</code> 仅在 <code>rememberablePatterns</code> 非空时有效。<code>pending</code> 只返回指定会话的请求，<code>resolve</code> 只接受当前插件会话命名空间内的请求。</p>
+<p>等待授权超时返回 <code>TOOL_APPROVAL_TIMEOUT</code>，执行超时返回 <code>TOOL_TIMEOUT</code>，策略拒绝返回 <code>TOOL_DENIED</code>，使用者拒绝返回 <code>TOOL_USER_REJECTED</code>；请求已过期、已处理或不属于当前插件时返回 <code>APPROVAL_NOT_FOUND</code>。</p>
+<p>工具调用绑定发起时的工作区与执行环境。评估或等待审批期间切换工作区、本地 / SSH 模式或 SSH 服务器，会使旧请求失效；应提示使用者在新环境重新发起，不要自动重试写操作。失效请求不会执行，也不会把「始终允许」写入新项目。</p>
+<p>页面侧使用 <code>minibot.tools.list</code> / <code>execute</code> / <code>pending</code> / <code>resolve</code>，调用形式见<a href="ui-pages.html#工具与-mcp">页面工具接口</a>。页面审批流程与模型工具循环见<a href="model-handles.html#审批流程">模型句柄与流式调用</a>。</p>
+<h2 id="handler-约定">handler 约定</h2>
+<p><code>hostCall</code> 从插件 SDK 导入，注册方式见<a href="source-build.html#运行时与-sdk">运行时与 SDK</a>。</p>
+<p>handler 可返回字符串、数字、布尔、数组或对象。抛出的异常会作为工具错误返回给 AI。</p>
+<pre><code class="language-ts">import { definePlugin, hostCall } from '@jieapi/plugin-sdk';
+
+definePlugin({
+  handlers: {
+    'tools.notify': async (args) =&gt; {
+      await hostCall('host.notify', {
+        title: String(args.title ?? ''),
+        body: String(args.body ?? ''),
+        key: args.key === undefined ? undefined : String(args.key)
+      });
+      return {ok: true, logs: ['notification sent']};
+    }
+  }
+});
+</code></pre>
+<p><code>logs</code> 最多 50 行、单行 500 字符，写入应用日志，不会作为工具结果展示给 AI。</p>
+<p>页面调用同一 handler 的方式见<a href="ui-pages.html#进程调用">进程调用</a>。SDK 已处理 <code>ui.invoke</code>；自行实现协议时缺少该方法会返回 <code>METHOD_UNKNOWN</code>。</p>
+<h2 id="依赖准备">依赖准备</h2>
+<p>插件依赖第三方库时，请勿提交 <code>node_modules</code> 或虚拟环境。应声明依赖输入：</p>
+<pre><code class="language-json">{
+  &quot;runtime&quot;: {
+    &quot;type&quot;: &quot;javascript&quot;,
+    &quot;entry&quot;: &quot;dist/main.js&quot;,
+    &quot;dependencies&quot;: {&quot;tool&quot;: &quot;npm&quot;, &quot;file&quot;: &quot;package.json&quot;}
+  }
+}
+</code></pre>
+<p>或：</p>
+<pre><code class="language-json">{
+  &quot;runtime&quot;: {
+    &quot;type&quot;: &quot;python&quot;,
+    &quot;entry&quot;: &quot;main.py&quot;,
+    &quot;dependencies&quot;: {&quot;tool&quot;: &quot;pip&quot;, &quot;file&quot;: &quot;requirements.txt&quot;}
+  }
+}
+</code></pre>
+<p>在插件详情页点击「准备依赖」，宿主会按依赖输入文件和 lockfile 的指纹创建独立缓存，并在插件安装目录中建立引用；代码替换不会删除可复用的 <code>node_modules</code> 或 Python 虚拟环境。npm 只安装 <code>dependencies</code>，不会安装 <code>devDependencies</code>；使用 lockfile 时执行 <code>npm ci --omit=dev</code>，没有 lockfile 时执行 <code>npm install --omit=dev</code>。因此构建期 SDK、TypeScript 和 bundler 可以放在 <code>devDependencies</code>，不要求发布到运行时 npm registry；运行时实际需要的库必须放在 <code>dependencies</code>，并在构建时 external。Python runtime 会优先使用缓存虚拟环境中的解释器。准备结果会保存，刷新或重启后仍可识别；准备期间若插件已替换或卸载，旧任务的结果不会覆盖新安装的状态。容器缺少 node/npm 或 python3 时仅提示前往终端执行「环境安装」，不会自动安装系统包。</p>
+<h2 id="常驻与自启动">常驻与自启动</h2>
+<p>需要长期运行的服务（例如本地提供商、文件监听）应设置 <code>resident: true</code>，并声明 <code>app.started</code> hook：</p>
+<pre><code class="language-json">{
+  &quot;runtime&quot;: {&quot;type&quot;: &quot;javascript&quot;, &quot;entry&quot;: &quot;dist/main.js&quot;, &quot;resident&quot;: true},
+  &quot;contributes&quot;: {
+    &quot;hooks&quot;: [{&quot;id&quot;: &quot;boot&quot;, &quot;event&quot;: &quot;app.started&quot;, &quot;handler&quot;: &quot;hooks.boot&quot;}]
+  }
+}
+</code></pre>
+<p><code>app.started</code> 仅在 App 主进程启动完成时派发一次，安装后需要立即启动时应另提供手动入口。handler 完成初始化后应尽快返回，服务在进程内继续运行；payload 与超时规则见 <a href="hooks.html#执行顺序与超时">Hooks 文档</a>。容器未初始化或缺少 node/python 时，Hook 会失败并记录日志，后续调用工具或 Hook 仍会按需启动进程。</p>
+<h2 id="安全边界">安全边界</h2>
+<ul>
+<li>插件进程与 Bash 同级，拥有容器内的文件、网络和命令能力；</li>
+<li>页面与宿主接口的限制不构成对插件进程的沙箱；</li>
+<li>命令与参数会原样执行，请勿在 <code>command</code> 中拼接未经校验的用户输入；</li>
+<li>仅安装可信来源的插件。</li>
+</ul>
+<h2 id="相关">相关</h2>
+<ul>
+<li>工具调用前后的拦截与改写：<a href="hooks.html">生命周期 Hooks</a></li>
+<li>插件进程向页面推送事件：<a href="ui-components.html">页面样式、组件与事件</a></li>
+<li>将由进程启动的本地服务注册为提供商：<a href="shizuku-providers.html">Shizuku 与插件提供商</a></li>
+</ul></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../../assets/nav-data.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

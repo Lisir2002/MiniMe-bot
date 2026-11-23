@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>plugin.json 清单参考 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../../assets/manual.css">
+</head>
+<body data-root="../../" data-page="advanced/plugin/manifest.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../../index.html"><img src="../../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><h1 id="pluginjson-清单参考">plugin.json 清单参考</h1>
+<p><code>plugin.json</code> 是插件的唯一入口声明。宿主仅加载清单中列出的内容；无法识别的字段和贡献类型将直接拒绝安装，不会静默忽略。</p>
+<p>清单有配套的 JSON Schema（<code>plugins/schema/plugin.schema.json</code>）：在编辑器里给 <code>plugin.json</code> 加上 <code>"$schema": "…/plugin.schema.json"</code>（相对路径指向该文件）后，字段名写错或类型不对会直接红线，还有字段补全与枚举提示。<code>$schema</code> 只给编辑器用，宿主会忽略它的内容。</p>
+<p>独立项目不在本仓库里，相对路径指不到那份 schema，可以把它复制进自己的仓库，或改成仓库的 raw 地址（<code>https://raw.githubusercontent.com/jieapi/AiCode/main/plugins/schema/plugin.schema.json</code>）；使用 <code>plugins/template</code> 开始的项目默认已指向仓库内路径，搬出去时改这一行即可。</p>
+<h2 id="顶层字段">顶层字段</h2>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$schema</code></td>
+<td>否</td>
+<td>JSON Schema 地址，仅编辑器使用；宿主忽略</td>
+</tr>
+<tr>
+<td><code>manifestVersion</code></td>
+<td>是</td>
+<td>固定为整数 <code>1</code></td>
+</tr>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>稳定插件标识，格式 <code>发布者.插件名</code></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>是</td>
+<td>展示名称，字符串或按语言的对象，最多 80 字符，不能换行</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>是</td>
+<td>语义化版本，如 <code>1.0.0</code>、<code>1.1.0-beta.1</code></td>
+</tr>
+<tr>
+<td><code>publisher</code></td>
+<td>是</td>
+<td>发布者标识，必须等于 <code>id</code> 的第一段</td>
+</tr>
+<tr>
+<td><code>repository</code></td>
+<td>是</td>
+<td>源码仓库，必须是 <code>https://</code> 地址，不能包含账号、查询参数或片段</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>是</td>
+<td>用途说明，字符串或按语言的对象，最多 600 字符，允许换行</td>
+</tr>
+<tr>
+<td><code>license</code></td>
+<td>是</td>
+<td>许可证名称，最多 100 字符</td>
+</tr>
+<tr>
+<td><code>icon</code></td>
+<td>否</td>
+<td>插件列表与详情图标：内置图标名，或包内 <code>.png</code> / <code>.webp</code> 相对路径</td>
+</tr>
+<tr>
+<td><code>engines</code></td>
+<td>是</td>
+<td>目前仅接受 <code>{"pluginApi": "版本范围"}</code></td>
+</tr>
+<tr>
+<td><code>runtime</code></td>
+<td>有工具、Hook 或动作型入口时必填</td>
+<td>业务进程的入口与启动方式</td>
+</tr>
+<tr>
+<td><code>contributes</code></td>
+<td>是</td>
+<td>提供的内容，至少一项</td>
+</tr>
+<tr>
+<td><code>configPage</code></td>
+<td>否</td>
+<td>插件配置页，包内 HTML 相对路径；也可声明在 <code>contributes.configPage</code> 中</td>
+</tr>
+</tbody>
+</table>
+<h3 id="插件图标">插件图标</h3>
+<p><code>icon</code> 只接受两种值：</p>
+<ul>
+<li>内置图标名：小写字母开头，仅含小写字母、数字和连字符，最多 32 个字符，如 <code>terminal</code>、<code>book</code>、<code>settings</code>、<code>cloud</code>、<code>tool</code>、<code>monitor</code>、<code>package</code>；未知名称回退 <code>package</code>。</li>
+<li>包内图片：以 <code>.png</code> 或 <code>.webp</code> 结尾的相对路径，如 <code>icons/logo.png</code>。图片必须位于包内，单文件不超过 256 KiB；宿主按最大边 160px 采样解码，无需提供多套尺寸。</li>
+</ul>
+<p>不支持 SVG、JPEG 等其它格式，清单里写这些后缀会直接拒绝安装。图片解码失败或未声明 <code>icon</code> 时显示宿主默认的 <code>package</code> 图标。插件 HTML 页面内部仍可自行使用包内 SVG 图片，那与清单图标无关。</p>
+<h3 id="id-与-publisher">id 与 publisher</h3>
+<ul>
+<li><code>id</code> 形如 <code>community.demo-kit</code>：两段均以小写字母开头，仅含小写字母、数字和连字符，每段最多 32 个字符；</li>
+<li><code>publisher</code> 必须等于 <code>id</code> 的第一段；</li>
+<li>插件 ID 同时用作安装目录名，安装后不应依赖重命名区分版本；</li>
+<li>局部 ID（技能、工具、页面等）由字母开头，仅含字母、数字、下划线、连字符，最多 64 个字符，同一类型内不可重复。</li>
+</ul>
+<h3 id="多语言文字">多语言文字</h3>
+<p><code>name</code>、<code>description</code> 以及各贡献的 <code>title</code>、<code>description</code> 均可声明为字符串或语言对象：</p>
+<pre><code class="language-json">{
+  &quot;name&quot;: {&quot;default&quot;: &quot;Demo Kit&quot;, &quot;zh-CN&quot;: &quot;演示套件&quot;},
+  &quot;description&quot;: {&quot;default&quot;: &quot;Demo plugin.&quot;, &quot;zh-CN&quot;: &quot;演示插件。&quot;}
+}
+</code></pre>
+<p>取值顺序为：完整语言标签（<code>zh-CN</code>）→ 语言（<code>zh</code>）→ <code>default</code> → <code>en</code> → 第一项。标签大小写和 <code>-</code>/<code>_</code> 不敏感，最多 16 种语言。</p>
+<h3 id="版本范围">版本范围</h3>
+<p><code>engines.pluginApi</code> 支持 <code>^1.0.0</code>、<code>~1.0.0</code>、<code>&gt;=1.0.0 &lt;2.0.0</code>、精确版本 <code>1.0.0</code>。不支持 <code>1.x</code>、<code>*</code>、<code>||</code> 和区间简写。宿主插件 API 为 <code>1.0.0</code>，范围必须包含该版本。</p>
+<h2 id="runtime">runtime</h2>
+<pre><code class="language-json">{
+  &quot;runtime&quot;: {
+    &quot;type&quot;: &quot;javascript&quot;,
+    &quot;entry&quot;: &quot;dist/main.js&quot;,
+    &quot;resident&quot;: true,
+    &quot;dependencies&quot;: {&quot;tool&quot;: &quot;npm&quot;, &quot;file&quot;: &quot;package.json&quot;}
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td>是</td>
+<td><code>javascript</code>（用 <code>node</code> 启动）或 <code>python</code>（用 <code>python3</code> 启动）</td>
+</tr>
+<tr>
+<td><code>entry</code></td>
+<td>是</td>
+<td>包内入口文件；JavaScript 用 <code>.js</code>/<code>.mjs</code>/<code>.cjs</code>，Python 用 <code>.py</code>，最大 512 KiB</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>否</td>
+<td>覆盖默认启动命令的字符串数组，直接交给 <code>execve</code>，不经 shell；最多 16 段，每段最多 200 字符，不得为绝对路径或包含 <code>..</code></td>
+</tr>
+<tr>
+<td><code>dependencies</code></td>
+<td>否</td>
+<td>依赖输入：<code>tool</code> 为 <code>npm</code> 或 <code>pip</code>，<code>file</code> 分别为 <code>.json</code>（如 <code>package.json</code>）或 <code>.txt</code>（如 <code>requirements.txt</code>）</td>
+</tr>
+<tr>
+<td><code>resident</code></td>
+<td>否</td>
+<td>为 <code>true</code> 时进程不参与 10 分钟空闲回收，首次启动后常驻；停用、卸载、版本替换或 App 进程结束仍会关闭</td>
+</tr>
+</tbody>
+</table>
+<p>存在 <code>contributes.tools</code>、<code>contributes.hooks</code>、<code>contributes.executionBackends</code>、<code>contributes.workflows</code>、<code>contributes.sessions</code> 或使用 <code>handler</code> 的 <code>uiEntries</code> 时必须提供 <code>runtime</code>。TypeScript 源码构建见<a href="source-build.html#运行时与-sdk">运行时与 SDK</a>。</p>
+<h2 id="contributes">contributes</h2>
+<p><code>contributes</code> 是一个对象，可用键如下。每类最多 64 项，至少要有其中一项：</p>
+<table>
+<thead>
+<tr>
+<th>键</th>
+<th>类型</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills</code></td>
+<td>数组</td>
+<td>技能 Markdown</td>
+</tr>
+<tr>
+<td><code>agents</code></td>
+<td>数组</td>
+<td>子代理定义</td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td>数组</td>
+<td>AI 可调用工具</td>
+</tr>
+<tr>
+<td><code>hooks</code></td>
+<td>数组</td>
+<td>生命周期 hook</td>
+</tr>
+<tr>
+<td><code>modelAccess</code></td>
+<td>对象</td>
+<td>声明调用使用者已配置的 AI 供应商</td>
+</tr>
+<tr>
+<td><code>mcp</code></td>
+<td>数组</td>
+<td>MCP 服务器配置</td>
+</tr>
+<tr>
+<td><code>providers</code></td>
+<td>数组</td>
+<td>OpenAI 兼容提供商</td>
+</tr>
+<tr>
+<td><code>executionBackends</code></td>
+<td>数组</td>
+<td>自定义执行后端（文件、命令、终端与工作区），最多 32 项</td>
+</tr>
+<tr>
+<td><code>workflows</code></td>
+<td>数组</td>
+<td>自定义 Agent 工作流，最多 32 项</td>
+</tr>
+<tr>
+<td><code>sessions</code></td>
+<td>数组</td>
+<td>外部会话源（增量同步与历史分页），最多 32 项</td>
+</tr>
+<tr>
+<td><code>workspaceTools</code></td>
+<td>数组</td>
+<td>右侧项目工具抽屉中的页面</td>
+</tr>
+<tr>
+<td><code>uiEntries</code></td>
+<td>数组</td>
+<td>挂载到宿主槽位的页面入口</td>
+</tr>
+<tr>
+<td><code>shizuku</code></td>
+<td>对象</td>
+<td>声明使用 Shizuku</td>
+</tr>
+<tr>
+<td><code>overlay</code></td>
+<td>对象</td>
+<td>声明系统浮层</td>
+</tr>
+<tr>
+<td><code>backup</code></td>
+<td>对象</td>
+<td>声明接收备份与还原事件</td>
+</tr>
+<tr>
+<td><code>configPage</code></td>
+<td>字符串</td>
+<td>插件详情中的配置页</td>
+</tr>
+</tbody>
+</table>
+<h3 id="skills-agents">skills / agents</h3>
+<pre><code class="language-json">{
+  &quot;skills&quot;: [{&quot;id&quot;: &quot;project-notes&quot;, &quot;file&quot;: &quot;skills/project-notes/SKILL.md&quot;}],
+  &quot;agents&quot;: [{&quot;id&quot;: &quot;reviewer&quot;, &quot;file&quot;: &quot;agents/reviewer.md&quot;}]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID，同一类型内唯一</td>
+</tr>
+<tr>
+<td><code>file</code></td>
+<td>是</td>
+<td>包内 <code>.md</code> 相对路径，最大 512 KiB</td>
+</tr>
+</tbody>
+</table>
+<p>技能和子代理的格式见<a href="skills-agents-mcp.html">技能、子代理与 MCP</a>。</p>
+<h3 id="tools">tools</h3>
+<pre><code class="language-json">{
+  &quot;tools&quot;: [
+    {
+      &quot;id&quot;: &quot;echo&quot;,
+      &quot;title&quot;: {&quot;default&quot;: &quot;Echo&quot;, &quot;zh-CN&quot;: &quot;回显&quot;},
+      &quot;description&quot;: {&quot;default&quot;: &quot;Echo the text.&quot;, &quot;zh-CN&quot;: &quot;回显文本。&quot;},
+      &quot;inputSchema&quot;: &quot;schemas/echo.input.json&quot;,
+      &quot;handler&quot;: &quot;tools.echo&quot;
+    }
+  ]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID，决定 AI 工具名的一部分</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>是</td>
+<td>展示名称，最多 80 字符</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>否</td>
+<td>供 AI 参考的用途说明，最多 600 字符；省略时为空字符串</td>
+</tr>
+<tr>
+<td><code>inputSchema</code></td>
+<td>是</td>
+<td>包内 <code>.json</code> JSON Schema 文件，最大 256 KiB，根必须是 <code>{"type": "object"}</code></td>
+</tr>
+<tr>
+<td><code>handler</code></td>
+<td>是</td>
+<td>入口脚本 handler 表中的键，如 <code>tools.echo</code></td>
+</tr>
+</tbody>
+</table>
+<p>工具需要 <code>runtime</code>。声明不会执行 handler，首次调用时才会启动进程。</p>
+<h3 id="hooks">hooks</h3>
+<pre><code class="language-json">{
+  &quot;hooks&quot;: [
+    {&quot;id&quot;: &quot;run-log&quot;, &quot;event&quot;: &quot;agent.run.finished&quot;, &quot;handler&quot;: &quot;hooks.runFinished&quot;},
+    {&quot;id&quot;: &quot;guard-bash&quot;, &quot;event&quot;: &quot;agent.tool.before&quot;, &quot;handler&quot;: &quot;hooks.guardBash&quot;, &quot;mode&quot;: &quot;transform&quot;},
+    {&quot;id&quot;: &quot;review&quot;, &quot;event&quot;: &quot;agent.permission.review&quot;, &quot;handler&quot;: &quot;hooks.review&quot;, &quot;mode&quot;: &quot;review&quot;}
+  ]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID</td>
+</tr>
+<tr>
+<td><code>event</code></td>
+<td>是</td>
+<td>必须是宿主支持的事件，参见<a href="hooks.html">生命周期 Hooks</a></td>
+</tr>
+<tr>
+<td><code>handler</code></td>
+<td>是</td>
+<td>入口脚本 handler 表中的键</td>
+</tr>
+<tr>
+<td><code>mode</code></td>
+<td>否</td>
+<td><code>observe</code>（默认）、<code>transform</code>、<code>review</code>；可写事件必须显式声明对应模式，声明错误将导致拒绝安装</td>
+</tr>
+</tbody>
+</table>
+<p><code>backup.export.before</code> 与 <code>backup.import.finished</code> 会带出完整备份包或写入暂存区，必须同时声明 <code>contributes.backup</code> 并由使用者授权；若声明了这两个事件却没有 <code>contributes.backup</code>，安装会被拒绝。</p>
+<h3 id="modelaccess">modelAccess</h3>
+<pre><code class="language-json">{
+  &quot;modelAccess&quot;: {
+    &quot;purpose&quot;: &quot;在团队群聊中轮流调用多个模型&quot;
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>purpose</code></td>
+<td>是</td>
+<td>用途说明，最多 200 字符；显示在安装预览与插件详情</td>
+</tr>
+</tbody>
+</table>
+<p>声明后可调用 <code>host.model.*</code> / <code>minibot.model.*</code>，请求计入对应供应商用量，插件拿不到 Key；未声明时返回 <code>MODEL_ACCESS_NOT_DECLARED</code>。调用方式见<a href="model-handles.html">模型句柄与流式调用</a>。</p>
+<h3 id="mcp">mcp</h3>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: [{&quot;id&quot;: &quot;project-context&quot;, &quot;file&quot;: &quot;mcp/project-context.json&quot;}]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID</td>
+</tr>
+<tr>
+<td><code>file</code></td>
+<td>是</td>
+<td>包内 <code>.json</code> 文件，最大 256 KiB，内容为现有 MCP 配置格式</td>
+</tr>
+</tbody>
+</table>
+<h3 id="providers">providers</h3>
+<pre><code class="language-json">{
+  &quot;providers&quot;: [
+    {
+      &quot;id&quot;: &quot;gateway&quot;,
+      &quot;name&quot;: {&quot;zh-CN&quot;: &quot;本地网关&quot;, &quot;en&quot;: &quot;Local Gateway&quot;},
+      &quot;description&quot;: {&quot;zh-CN&quot;: &quot;本机 OpenAI 兼容服务&quot;},
+      &quot;format&quot;: &quot;openai&quot;,
+      &quot;baseUrl&quot;: &quot;http://127.0.0.1:18080/v1&quot;
+    }
+  ]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>是</td>
+<td>本地化名称，最多 80 字符</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>否</td>
+<td>本地化说明，最多 600 字符</td>
+</tr>
+<tr>
+<td><code>format</code></td>
+<td>是</td>
+<td>目前仅支持 <code>openai</code></td>
+</tr>
+<tr>
+<td><code>baseUrl</code></td>
+<td>是</td>
+<td><code>http</code>/<code>https</code> 绝对地址，不能包含账号、查询参数或片段，最长 2048 字符</td>
+</tr>
+</tbody>
+</table>
+<p>宿主按此声明注册提供商；服务启动、模型与凭据维护见<a href="shizuku-providers.html#插件提供商">插件提供商</a>。插件 provider 的请求会自动携带 <code>X-Mini-AIBOT-Session-Id</code> 请求头，值为当前 App 会话 ID，插件网关可用它把请求路由到对应会话。</p>
+<h3 id="executionbackends">executionBackends</h3>
+<p><code>executionBackends</code> 最多声明 32 项，由插件提供全局执行后端，启用后使用者可在工作区/执行环境中切换，使文件树、代码编辑器、Git、终端与内置工具通过插件读写目标环境。必须提供 <code>runtime</code>。</p>
+<pre><code class="language-json">{
+  &quot;executionBackends&quot;: [
+    {
+      &quot;id&quot;: &quot;cloud-box&quot;,
+      &quot;title&quot;: {&quot;default&quot;: &quot;Cloud Sandbox&quot;, &quot;zh-CN&quot;: &quot;云沙盒&quot;},
+      &quot;description&quot;: &quot;在远端沙盒中执行命令与读写文件&quot;,
+      &quot;capabilities&quot;: {
+        &quot;filesystem&quot;: true,
+        &quot;command&quot;: true,
+        &quot;terminal&quot;: true,
+        &quot;fileWatch&quot;: false,
+        &quot;portForward&quot;: false,
+        &quot;isRemoteEnvironment&quot;: true,
+        &quot;workspaceDiscovery&quot;: &quot;hybrid&quot;,
+        &quot;projectConfigLocation&quot;: &quot;appPrivateDir&quot;
+      },
+      &quot;handlers&quot;: {
+        &quot;fs&quot;: &quot;backend.fs&quot;,
+        &quot;exec&quot;: &quot;backend.exec&quot;,
+        &quot;execStream&quot;: &quot;backend.execStream&quot;,
+        &quot;execHealth&quot;: &quot;backend.health&quot;,
+        &quot;terminal&quot;: &quot;backend.terminal&quot;,
+        &quot;workspaceList&quot;: &quot;backend.wsList&quot;,
+        &quot;workspaceCreate&quot;: &quot;backend.wsCreate&quot;,
+        &quot;workspaceDelete&quot;: &quot;backend.wsDelete&quot;,
+        &quot;workspaceSelect&quot;: &quot;backend.wsSelect&quot;
+      }
+    }
+  ]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID，同一插件内唯一</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>是</td>
+<td>本地化展示名称，最多 80 字符</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>否</td>
+<td>本地化说明，最多 600 字符</td>
+</tr>
+<tr>
+<td><code>capabilities</code></td>
+<td>否</td>
+<td>后端能力声明与工作区行为；省略对象或子字段时采用下表默认值</td>
+</tr>
+<tr>
+<td><code>handlers</code></td>
+<td>是</td>
+<td>runtime handler 映射，必须满足启用能力的要求；默认需要 <code>fs</code> 和 <code>exec</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>capabilities</code> 字段：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>默认值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>filesystem</code></td>
+<td><code>true</code></td>
+<td>是否支持文件访问；为 <code>true</code> 时必填 <code>handlers.fs</code></td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td><code>true</code></td>
+<td>是否支持命令执行；为 <code>true</code> 时必填 <code>handlers.exec</code></td>
+</tr>
+<tr>
+<td><code>terminal</code></td>
+<td><code>false</code></td>
+<td>是否支持终端 PTY；为 <code>true</code> 时必填 <code>handlers.terminal</code></td>
+</tr>
+<tr>
+<td><code>fileWatch</code></td>
+<td><code>false</code></td>
+<td>插件后端文件变更监听当前未开放，只能省略或为 <code>false</code></td>
+</tr>
+<tr>
+<td><code>portForward</code></td>
+<td><code>false</code></td>
+<td>插件后端端口转发当前未开放，只能省略或为 <code>false</code></td>
+</tr>
+<tr>
+<td><code>isRemoteEnvironment</code></td>
+<td><code>true</code></td>
+<td>是否属于远程环境（用于区分默认工作区类型与界面展示）</td>
+</tr>
+<tr>
+<td><code>workspaceDiscovery</code></td>
+<td><code>"scan"</code></td>
+<td>工作区发现模式：<code>scan</code>（宿主拉取）、<code>register</code>（插件主动推送）或 <code>hybrid</code>（两者结合）</td>
+</tr>
+<tr>
+<td><code>projectConfigLocation</code></td>
+<td><code>"appPrivateDir"</code></td>
+<td>项目级 <code>.minibot</code> 存储位置：<code>workspaceDir</code>（工作区目录）或 <code>appPrivateDir</code>（App 私有目录），只接受 camelCase；当前 <code>workspaceDir</code> 仅允许显式声明 <code>isRemoteEnvironment: false</code> 的后端使用</td>
+</tr>
+</tbody>
+</table>
+<p><code>handlers</code> 支持以下可选键（按声明的能力提供）：<code>fs</code>、<code>exec</code>、<code>execStream</code>、<code>execHealth</code>、<code>terminal</code>、<code>workspaceList</code>、<code>workspaceCreate</code>、<code>workspaceDelete</code>、<code>workspaceSelect</code>。</p>
+<p>当 <code>workspaceDiscovery</code> 为 <code>register</code> 或 <code>hybrid</code> 时，插件可通过以下宿主方法增量维护该后端下的工作区列表：</p>
+<ul>
+<li><code>host.workspaces.upsert({ backendId, workspaces })</code>：按必填的 <code>id</code> 增量插入或更新工作区；</li>
+<li><code>host.workspaces.remove({ backendId, workspaceIds })</code>：按工作区 ID 移除条目；</li>
+<li><code>host.workspaces.set({ backendId, workspaces })</code>：全量替换该后端的工作区列表。</li>
+</ul>
+<p>工作区条目结构、参数限制与 <a href="tools-runtime.html#uds-二进制通道">UDS 二进制通道</a> 见<a href="tools-runtime.html#工作区与外部会话">工作区与外部会话</a>。</p>
+<h3 id="workflows">workflows</h3>
+<p><code>workflows</code> 声明由插件接管的 Agent 推理与工具循环工作流。用户新建或切换会话工作流后，每轮执行由宿主运行器统一调度，并将插件推送的流式事件映射为标准聊天消息与工具进度卡片。必须提供 <code>runtime</code>。</p>
+<pre><code class="language-json">{
+  &quot;workflows&quot;: [
+    {
+      &quot;id&quot;: &quot;codex-loop&quot;,
+      &quot;title&quot;: {&quot;default&quot;: &quot;Codex Loop&quot;, &quot;zh-CN&quot;: &quot;Codex 工作流&quot;},
+      &quot;description&quot;: &quot;将单轮 Agent 推理托管给外部工作流引擎&quot;,
+      &quot;capabilities&quot;: {
+        &quot;streaming&quot;: true,
+        &quot;tools&quot;: true,
+        &quot;compaction&quot;: true,
+        &quot;titleGeneration&quot;: false
+      },
+      &quot;handlers&quot;: {
+        &quot;startTurn&quot;: &quot;wf.startTurn&quot;,
+        &quot;cancelTurn&quot;: &quot;wf.cancelTurn&quot;,
+        &quot;compact&quot;: &quot;wf.compact&quot;,
+        &quot;generateTitle&quot;: &quot;wf.title&quot;
+      }
+    }
+  ]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID，注册后的完整工作流 ID 为 <code>&lt;插件ID&gt;:&lt;id&gt;</code></td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>是</td>
+<td>本地化名称，最多 80 字符</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>否</td>
+<td>本地化说明，最多 600 字符</td>
+</tr>
+<tr>
+<td><code>capabilities</code></td>
+<td>否</td>
+<td>能力标记：<code>streaming</code>（默认 <code>true</code>）、<code>tools</code>（默认 <code>true</code>）、<code>compaction</code>（默认 <code>false</code>）、<code>titleGeneration</code>（默认 <code>false</code>）</td>
+</tr>
+<tr>
+<td><code>handlers.startTurn</code></td>
+<td>是</td>
+<td>启动单轮执行的 handler</td>
+</tr>
+<tr>
+<td><code>handlers.cancelTurn</code></td>
+<td>是</td>
+<td>中断指定 <code>turnId</code> 的 handler</td>
+</tr>
+<tr>
+<td><code>handlers.compact</code></td>
+<td>否</td>
+<td>响应 <code>/compress</code> 上下文压缩的 handler</td>
+</tr>
+<tr>
+<td><code>handlers.generateTitle</code></td>
+<td>否</td>
+<td>生成会话标题的 handler；未提供或返回空时回退宿主默认逻辑</td>
+</tr>
+</tbody>
+</table>
+<p><code>startTurn</code> 建议通过 <a href="tools-runtime.html#uds-二进制通道">UDS 二进制通道</a> 的流式请求返回事件（未建连时自动回退至 NDJSON 事件推送），支持的事件 <code>type</code> 包括：<code>assistant.delta</code>、<code>reasoning.delta</code>、<code>assistant.message</code>、<code>tool.preparing</code>、<code>tool.started</code>、<code>tool.progress</code>、<code>tool.finished</code>、<code>retrying</code>、<code>keySwitched</code>、<code>contextUsage</code>、<code>compaction.started</code>、<code>compaction.finished</code>、<code>compaction.failed</code>、<code>modeChanged</code>、<code>completed</code>、<code>failed</code>。可在响应或结束事件中附带 <code>workflowState</code>，由宿主持久化并在下一轮原样回传。</p>
+<h3 id="sessions">sessions</h3>
+<p><code>sessions</code> 声明一个外部会话源，用于在侧栏展示由插件或远端系统托管的会话分组、分页读取历史消息，以及响应刷新与增删改置顶操作。必须提供 <code>runtime</code>。</p>
+<pre><code class="language-json">{
+  &quot;sessions&quot;: [
+    {
+      &quot;id&quot;: &quot;harness&quot;,
+      &quot;title&quot;: {&quot;default&quot;: &quot;Harness&quot;, &quot;zh-CN&quot;: &quot;外部会话&quot;},
+      &quot;description&quot;: &quot;同步远端外部会话列表与历史消息&quot;,
+      &quot;handlers&quot;: {
+        &quot;refresh&quot;: &quot;sessions.refresh&quot;,
+        &quot;readMessages&quot;: &quot;sessions.readMessages&quot;,
+        &quot;createSession&quot;: &quot;sessions.create&quot;,
+        &quot;deleteSession&quot;: &quot;sessions.delete&quot;,
+        &quot;renameSession&quot;: &quot;sessions.rename&quot;,
+        &quot;pinSession&quot;: &quot;sessions.pin&quot;
+      }
+    }
+  ]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID，最多声明 32 项</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>是</td>
+<td>本地化分组标题，最多 80 字符</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>否</td>
+<td>本地化说明，最多 600 字符</td>
+</tr>
+<tr>
+<td><code>handlers.readMessages</code></td>
+<td>是</td>
+<td>分页读取指定外部会话历史消息的 handler</td>
+</tr>
+<tr>
+<td><code>handlers.refresh</code></td>
+<td>否</td>
+<td>宿主触发列表刷新时调用的 handler</td>
+</tr>
+<tr>
+<td><code>handlers.createSession</code></td>
+<td>否</td>
+<td>新建外部会话的 handler</td>
+</tr>
+<tr>
+<td><code>handlers.deleteSession</code></td>
+<td>否</td>
+<td>删除外部会话的 handler</td>
+</tr>
+<tr>
+<td><code>handlers.renameSession</code></td>
+<td>否</td>
+<td>重命名外部会话的 handler</td>
+</tr>
+<tr>
+<td><code>handlers.pinSession</code></td>
+<td>否</td>
+<td>置顶或取消置顶外部会话的 handler</td>
+</tr>
+</tbody>
+</table>
+<p><code>sessions</code> 仅负责会话目录与历史读取，不再耦合消息发送通道；在外部会话中发送消息时，若会话绑定了 <code>workflowId</code>（或使用默认工作流），会由宿主运行器调度对应工作流执行并在内存中投影更新。</p>
+<p>插件侧可通过以下宿主方法增量维护外部会话分组：</p>
+<ul>
+<li><code>host.sessions.upsert</code>：按 <code>sessionId</code> 合并新增或更新会话摘要；</li>
+<li><code>host.sessions.remove</code>：移除指定 <code>sessionIds</code>；</li>
+<li><code>host.sessions.replaceAll</code>：全量对齐该会话源的会话列表；</li>
+<li><code>host.sessions.setLoading</code>、<code>host.sessions.setError</code>、<code>host.sessions.setThinking</code>：控制分组加载态、错误横幅与会话等待气泡。</li>
+</ul>
+<p>详细参数见<a href="tools-runtime.html#工作区与外部会话">工作区与外部会话</a>。</p>
+<h3 id="主动授权请求">主动授权请求</h3>
+<p>插件需要用户授权时，可以使用原生授权卡片：</p>
+<pre><code class="language-ts">const result = await hostCall('host.permissions.request', {
+  sessionId: appSessionId,
+  requestId: remoteRequestId,
+  title: '执行远端命令',
+  description: '运行项目测试',
+  operation: {kind: 'command', command: 'npm test', workingDirectory: '/project'},
+});
+if (result.decision === 'allow') {
+  // 将本次决定回传给实际执行方。
+}
+</code></pre>
+<p><code>sessionId</code> 必须是当前工作区会话 ID。返回 <code>allow</code> / <code>deny</code> / <code>cancel</code>，只批准本次请求，不产生永久授权，也不覆盖宿主工具的权限判断。超时、工作区切换、会话移除或插件停用时取消。可用 <code>host.permissions.cancel({requestId})</code> 撤回；页面对应 <code>minibot.permissions.request(options)</code> / <code>cancel(requestId)</code>。卡片由 App 固定标注插件来源。请求默认等待 2 分钟，可用 <code>timeoutMs</code> 设置 1 秒至 10 分钟。</p>
+<h3 id="workspacetools">workspaceTools</h3>
+<pre><code class="language-json">{
+  &quot;workspaceTools&quot;: [
+    {
+      &quot;id&quot;: &quot;build-apk&quot;,
+      &quot;title&quot;: {&quot;default&quot;: &quot;Build APK&quot;, &quot;zh-CN&quot;: &quot;构建 APK&quot;},
+      &quot;description&quot;: {&quot;default&quot;: &quot;Build the current project.&quot;, &quot;zh-CN&quot;: &quot;构建当前项目。&quot;},
+      &quot;icon&quot;: &quot;hammer&quot;,
+      &quot;category&quot;: &quot;构建&quot;,
+      &quot;pageFile&quot;: &quot;pages/build-apk.html&quot;
+    }
+  ]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>是</td>
+<td>本地化名称，最多 80 字符</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>否</td>
+<td>本地化说明，最多 600 字符</td>
+</tr>
+<tr>
+<td><code>icon</code></td>
+<td>否</td>
+<td>图标名，默认 <code>play</code></td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td>否</td>
+<td>分类名，默认 <code>通用</code></td>
+</tr>
+<tr>
+<td><code>pageFile</code></td>
+<td>是</td>
+<td>包内 <code>.html</code>/<code>.htm</code> 页面，最大 512 KiB</td>
+</tr>
+</tbody>
+</table>
+<h3 id="uientries">uiEntries</h3>
+<pre><code class="language-json">{
+  &quot;uiEntries&quot;: [
+    {
+      &quot;id&quot;: &quot;memory&quot;,
+      &quot;title&quot;: {&quot;zh-CN&quot;: &quot;记忆管理&quot;, &quot;en&quot;: &quot;Memory&quot;},
+      &quot;slot&quot;: &quot;settings.ai&quot;,
+      &quot;page&quot;: &quot;pages/memory.html&quot;,
+      &quot;icon&quot;: &quot;book&quot;
+    },
+    {
+      &quot;id&quot;: &quot;sync&quot;,
+      &quot;title&quot;: {&quot;zh-CN&quot;: &quot;同步笔记&quot;, &quot;en&quot;: &quot;Sync notes&quot;},
+      &quot;slot&quot;: &quot;drawer.footer&quot;,
+      &quot;icon&quot;: &quot;refresh&quot;,
+      &quot;handler&quot;: &quot;actions.sync&quot;,
+      &quot;confirm&quot;: true
+    }
+  ]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID，同一插件的入口不可重名</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>是</td>
+<td>本地化名称，最多 80 字符</td>
+</tr>
+<tr>
+<td><code>slot</code></td>
+<td>是</td>
+<td>宿主槽位，仅可取下表的值</td>
+</tr>
+<tr>
+<td><code>page</code></td>
+<td>二选一</td>
+<td>包内 <code>.html</code>/<code>.htm</code> 页面，最大 512 KiB</td>
+</tr>
+<tr>
+<td><code>handler</code></td>
+<td>二选一</td>
+<td>runtime 的 handler 名；需要声明 <code>runtime</code></td>
+</tr>
+<tr>
+<td><code>confirm</code></td>
+<td>否</td>
+<td>仅动作入口：执行前弹确认框</td>
+</tr>
+<tr>
+<td><code>icon</code></td>
+<td>否</td>
+<td>图标名，默认 <code>book</code>，最长 32 字符</td>
+</tr>
+</tbody>
+</table>
+<p>除 <code>backup.data</code> 外，<code>page</code> 与 <code>handler</code> 必须且只能出现一个。<code>settings.*</code> 槽位只接受 <code>page</code>；<code>files.tree.menu</code> 与 <code>editor.selection.menu</code> 只接受 <code>handler</code>；<code>backup.data</code> 只接受数据选项（不能写 <code>page</code> / <code>handler</code> / <code>confirm</code>）。动作上下文与返回行为见<a href="ui-pages.html#槽位入口">槽位入口</a>。</p>
+<table>
+<thead>
+<tr>
+<th><code>slot</code></th>
+<th>位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>settings.general</code></td>
+<td>设置页「通用」分组末尾</td>
+</tr>
+<tr>
+<td><code>settings.ai</code></td>
+<td>设置页「AI 配置」分组末尾</td>
+</tr>
+<tr>
+<td><code>settings.environment</code></td>
+<td>设置页「运行环境」分组末尾</td>
+</tr>
+<tr>
+<td><code>settings.permissions</code></td>
+<td>设置页「权限与后台」分组末尾</td>
+</tr>
+<tr>
+<td><code>settings.data</code></td>
+<td>设置页「数据与诊断」分组末尾</td>
+</tr>
+<tr>
+<td><code>settings.help</code></td>
+<td>设置页「帮助与关于」分组末尾</td>
+</tr>
+<tr>
+<td><code>drawer.footer</code></td>
+<td>侧栏底部，浏览器与设置之上</td>
+</tr>
+<tr>
+<td><code>chat.header.menu</code></td>
+<td>聊天顶栏「更多」菜单底部</td>
+</tr>
+<tr>
+<td><code>chat.welcome</code></td>
+<td>聊天空态建议区，最多展示 3 条</td>
+</tr>
+<tr>
+<td><code>chat.session.menu</code></td>
+<td>会话长按菜单，删除项之前</td>
+</tr>
+<tr>
+<td><code>files.tree.menu</code></td>
+<td>文件树文件/目录长按菜单，插件项在删除之前</td>
+</tr>
+<tr>
+<td><code>editor.selection.menu</code></td>
+<td>代码编辑器选中文本后的浮动菜单</td>
+</tr>
+<tr>
+<td><code>backup.data</code></td>
+<td>备份页「选择导出数据」组末尾，只接受数据选项</td>
+</tr>
+</tbody>
+</table>
+<p>同一插件在每个槽位最多声明 2 个入口（<code>backup.data</code> 最多 1 个）；超出会在安装时拒绝。入口顺序由宿主决定：宿主自己的项始终在前，插件项按插件显示名与声明顺序排列，插件不能指定排序或插入位置。</p>
+<h3 id="configpage">configPage</h3>
+<pre><code class="language-json">{
+  &quot;contributes&quot;: {
+    &quot;configPage&quot;: &quot;pages/config.html&quot;
+  }
+}
+</code></pre>
+<p>也可写在顶层：</p>
+<pre><code class="language-json">{
+  &quot;configPage&quot;: &quot;pages/config.html&quot;,
+  &quot;contributes&quot;: {&quot;skills&quot;: [{&quot;id&quot;: &quot;hello&quot;, &quot;file&quot;: &quot;skills/hello/SKILL.md&quot;}]}
+}
+</code></pre>
+<p>配置页仅出现在「设置 → 插件」的插件详情中，与启停、卸载等原生项通过分段控件切换，不会混入设置主菜单。必须是包内 <code>.html</code>/<code>.htm</code> 文件。</p>
+<h3 id="shizuku">shizuku</h3>
+<pre><code class="language-json">{
+  &quot;contributes&quot;: {
+    &quot;shizuku&quot;: {&quot;purpose&quot;: &quot;切换免打扰与查询系统设置&quot;}
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>purpose</code></td>
+<td>是</td>
+<td>用途说明，最多 200 字符，展示在授权界面</td>
+</tr>
+</tbody>
+</table>
+<p>声明不会自动获得授权。使用者需在插件详情中单独开启 Shizuku 权限，且系统中的 Shizuku 服务须正在运行。</p>
+<h3 id="overlay">overlay</h3>
+<pre><code class="language-json">{
+  &quot;contributes&quot;: {
+    &quot;overlay&quot;: {
+      &quot;purpose&quot;: &quot;悬浮小组件与状态 HUD&quot;,
+      &quot;surfaces&quot;: [
+        {&quot;id&quot;: &quot;pet&quot;, &quot;page&quot;: &quot;pages/pet.html&quot;, &quot;width&quot;: 240, &quot;height&quot;: 320, &quot;draggable&quot;: true, &quot;snap&quot;: &quot;x&quot;}
+      ]
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>purpose</code></td>
+<td>是</td>
+<td>用途说明，最多 200 字符</td>
+</tr>
+<tr>
+<td><code>surfaces</code></td>
+<td>是</td>
+<td>至少 1 个、最多 3 个浮层页面</td>
+</tr>
+</tbody>
+</table>
+<p>每个 surface：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>是</td>
+<td>局部 ID，同一插件内唯一</td>
+</tr>
+<tr>
+<td><code>page</code></td>
+<td>是</td>
+<td>包内 <code>.html</code>/<code>.htm</code> 页面</td>
+</tr>
+<tr>
+<td><code>width</code></td>
+<td>否</td>
+<td>默认宽度，单位 dp，默认 240，范围 48–720</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td>否</td>
+<td>默认高度，单位 dp，默认 320，范围 48–1200</td>
+</tr>
+<tr>
+<td><code>draggable</code></td>
+<td>否</td>
+<td>是否允许拖动，默认 <code>true</code></td>
+</tr>
+<tr>
+<td><code>snap</code></td>
+<td>否</td>
+<td>松手吸附轴：<code>none</code>、<code>x</code>、<code>y</code>、<code>both</code>，默认 <code>none</code></td>
+</tr>
+</tbody>
+</table>
+<p>浮层需要使用者单独授权，且 App 需获得「显示在其他应用上层」的系统权限。</p>
+<h3 id="backup">backup</h3>
+<pre><code class="language-json">{
+  &quot;contributes&quot;: {
+    &quot;backup&quot;: {&quot;purpose&quot;: &quot;把额外数据随备份一起导出&quot;},
+    &quot;hooks&quot;: [
+      {&quot;id&quot;: &quot;before-export&quot;, &quot;event&quot;: &quot;backup.export.before&quot;, &quot;handler&quot;: &quot;hooks.onExportBefore&quot;},
+      {&quot;id&quot;: &quot;after-import&quot;, &quot;event&quot;: &quot;backup.import.finished&quot;, &quot;handler&quot;: &quot;hooks.onImport&quot;}
+    ],
+    &quot;uiEntries&quot;: [
+      {&quot;id&quot;: &quot;extra-data&quot;, &quot;title&quot;: &quot;记忆 / 技能&quot;, &quot;slot&quot;: &quot;backup.data&quot;, &quot;icon&quot;: &quot;package&quot;}
+    ]
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>purpose</code></td>
+<td>是</td>
+<td>用途说明，最多 200 字符，展示在授权界面</td>
+</tr>
+</tbody>
+</table>
+<p>声明不会自动获得授权。使用者需在插件详情中单独开启「备份与还原事件」授权，停用期间不派发，重新启用后恢复；卸载插件会撤销授权。</p>
+<p>使用者在备份页勾选 <code>backup.data</code> 数据选项后，插件参与导出。暂存目录、备份区段与事件 payload 见<a href="hooks.html#备份与还原事件">备份与还原事件</a>。</p>
+<h2 id="会被拒绝的声明方式">会被拒绝的声明方式</h2>
+<table>
+<thead>
+<tr>
+<th>声明方式</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>顶层或贡献中出现未支持的字段</td>
+<td><code>UNSUPPORTED_FIELD</code>，提示具体路径</td>
+</tr>
+<tr>
+<td><code>manifestVersion</code> 不是 <code>1</code></td>
+<td>拒绝安装</td>
+</tr>
+<tr>
+<td><code>id</code> 不是两段、包含大写或下划线</td>
+<td><code>FIELD_INVALID</code></td>
+</tr>
+<tr>
+<td><code>publisher</code> 与 <code>id</code> 第一段不一致</td>
+<td><code>FIELD_INVALID</code></td>
+</tr>
+<tr>
+<td><code>repository</code> 不是 https、包含账号或查询参数</td>
+<td><code>FIELD_INVALID</code></td>
+</tr>
+<tr>
+<td>技能/子代理的 <code>file</code> 不是 <code>.md</code></td>
+<td><code>FIELD_INVALID</code></td>
+</tr>
+<tr>
+<td>工具 <code>inputSchema</code> 不是 <code>.json</code> 或根不是 object</td>
+<td><code>FIELD_INVALID</code> / <code>CONTENT_INVALID</code></td>
+</tr>
+<tr>
+<td>存在 <code>tools</code>、<code>hooks</code>、<code>executionBackends</code>、<code>workflows</code> 或 <code>sessions</code> 但未声明 <code>runtime</code></td>
+<td><code>FIELD_MISSING</code></td>
+</tr>
+<tr>
+<td><code>executionBackends</code> 声明了能力但缺少对应 <code>handlers.fs</code> / <code>exec</code> / <code>terminal</code></td>
+<td><code>FIELD_MISSING</code></td>
+</tr>
+<tr>
+<td><code>executionBackends</code> 的 <code>fileWatch</code> 或 <code>portForward</code> 为 <code>true</code>，或远端后端使用 <code>workspaceDir</code></td>
+<td><code>FIELD_INVALID</code></td>
+</tr>
+<tr>
+<td><code>workflows</code> 缺少 <code>handlers.startTurn</code> / <code>cancelTurn</code> 或 <code>sessions</code> 缺少 <code>handlers.readMessages</code></td>
+<td><code>FIELD_MISSING</code></td>
+</tr>
+<tr>
+<td>hook 的 <code>event</code> 不在支持列表，或 <code>mode</code> 与事件不匹配</td>
+<td><code>FIELD_INVALID</code></td>
+</tr>
+<tr>
+<td>同一类型内 <code>id</code> 重复</td>
+<td><code>DUPLICATE_ID</code></td>
+</tr>
+<tr>
+<td><code>contributes</code> 为空或仅包含未支持的类型</td>
+<td><code>FIELD_INVALID</code></td>
+</tr>
+</tbody>
+</table>
+<p>更完整的导入报错排查参见<a href="packaging.html">打包、导入与排错</a>。</p></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../../assets/nav-data.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

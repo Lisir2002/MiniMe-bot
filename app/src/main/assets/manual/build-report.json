@@ -1,0 +1,25 @@
+{
+  "crawled_at": "2026-11-23T03:37:57+0800",
+  "crawled_ok": 54,
+  "crawled_failed": 40,
+  "pages_bundled": 66,
+  "from_live_site": 51,
+  "from_repo_markdown": 15,
+  "repo_only_pages": [
+    "/advanced/plugin",
+    "/advanced/plugin/hooks",
+    "/advanced/plugin/manifest",
+    "/advanced/plugin/model-handles",
+    "/advanced/plugin/overlay",
+    "/advanced/plugin/packaging",
+    "/advanced/plugin/quick-start",
+    "/advanced/plugin/shizuku-providers",
+    "/advanced/plugin/skills-agents-mcp",
+    "/advanced/plugin/source-build",
+    "/advanced/plugin/tools-runtime",
+    "/advanced/plugin/ui-components",
+    "/advanced/plugin/ui-pages",
+    "/guide/plugins",
+    "/guide/session-management"
+  ]
+}

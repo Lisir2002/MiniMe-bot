@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shizuku 与插件提供商 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../../assets/manual.css">
+</head>
+<body data-root="../../" data-page="advanced/plugin/shizuku-providers.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../../index.html"><img src="../../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><h1 id="shizuku-与插件提供商">Shizuku 与插件提供商</h1>
+<p>Shizuku 用于执行 Android 系统命令，需要插件级独立授权；插件提供商用于接入 OpenAI 兼容服务，在插件启用后注册到模型设置中。两项能力可按需分别使用。</p>
+<h2 id="shizuku">Shizuku</h2>
+<h3 id="声明与授权">声明与授权</h3>
+<p>在 <code>contributes.shizuku</code> 中填写用途 <code>purpose</code>，字段限制见<a href="manifest.html#shizuku">清单参考</a>。声明不会自动获得权限，实际执行需满足：</p>
+<ul>
+<li>Shizuku 服务正在运行。</li>
+<li>App 已获得 Shizuku 的系统授权。</li>
+<li>使用者在插件详情中开启了该插件的 Shizuku 权限。</li>
+</ul>
+<p>授权后，该插件可直接执行 Shizuku 命令，无需逐次确认。用途说明不限制具体命令，仅应为可信插件授权。</p>
+<h3 id="执行命令">执行命令</h3>
+<p>页面调用：</p>
+<pre><code class="language-ts">const result = await minibot.shizuku.exec('settings get global airplane_mode_on', {timeout: 30});
+</code></pre>
+<p>进程调用：</p>
+<pre><code class="language-ts">import { hostCall } from '@jieapi/plugin-sdk';
+
+const result = await hostCall('host.shizuku.exec', {
+  command: 'settings get global airplane_mode_on',
+  timeout: 30
+});
+</code></pre>
+<p><code>timeout</code> 以秒计，默认为 120。命令在 Android 系统上执行，输出与退出码按宿主返回值处理；权限缺失或服务未运行时会失败并记录日志。浮层页面的调用限制见<a href="overlay.html#浮层页面">系统浮层</a>。</p>
+<h2 id="插件提供商">插件提供商</h2>
+<p>在 <code>contributes.providers</code> 中登记 OpenAI 兼容服务，字段与地址限制见<a href="manifest.html#providers">清单参考</a>。宿主复用现有 OpenAI 适配器，插件负责保证服务可访问。</p>
+<p><code>baseUrl</code> 可指向固定外部服务，也可指向容器内 <code>http://127.0.0.1:&lt;port&gt;</code>。</p>
+<h3 id="生效方式">生效方式</h3>
+<p>插件启用后，宿主在「设置 → 提供商」中创建带「插件」标记的普通条目：</p>
+<ul>
+<li>使用者可改名、修改地址和凭据、启用或停用。</li>
+<li>可从兼容服务的 <code>/v1/models</code> 拉取并选择模型。</li>
+<li>服务未就绪时请求直接失败，不会回退到其他渠道。</li>
+<li>插件停用或卸载时，其注册的条目一并删除。</li>
+</ul>
+<p>清单中不要内嵌上游密钥。凭据可由使用者在提供商条目中填写，或由插件通过加密存储维护。</p>
+<h3 id="由插件维护模型与凭据">由插件维护模型与凭据</h3>
+<p>页面与进程只能维护本插件声明、且已注册的提供商，无需声明 <code>contributes.modelAccess</code>。</p>
+<table>
+<thead>
+<tr>
+<th>页面调用</th>
+<th>进程调用</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minibot.providers.listModels(providerId)</code></td>
+<td><code>host.providers.listModels({providerId})</code></td>
+<td>读取配置，返回 <code>{providerId, models, selectedModel}</code>，不访问上游</td>
+</tr>
+<tr>
+<td><code>minibot.providers.addModel(providerId, model, options?)</code></td>
+<td><code>host.providers.addModel({providerId, model, contextTokens?})</code></td>
+<td>追加模型；重复添加视为成功，尚无选中模型时自动选中它</td>
+</tr>
+<tr>
+<td><code>minibot.providers.deleteModel(providerId, model)</code></td>
+<td><code>host.providers.deleteModel({providerId, model})</code></td>
+<td>返回 <code>{providerId, model, models, selectedModel, removed}</code>；不存在时 <code>removed: false</code>，删除选中模型时回退到剩余模型</td>
+</tr>
+<tr>
+<td><code>minibot.providers.setModelContext(providerId, model, contextTokens)</code></td>
+<td><code>host.providers.setModelContext({providerId, model, contextTokens})</code></td>
+<td>写入模型上下文窗口</td>
+</tr>
+<tr>
+<td><code>minibot.providers.setApiKey(providerId, apiKey)</code></td>
+<td><code>host.providers.setApiKey({providerId, apiKey})</code></td>
+<td>设置单 Key；空串清除，值不回显</td>
+</tr>
+</tbody>
+</table>
+<p>服务启动后可在页面同步配置：</p>
+<pre><code class="language-ts">await minibot.providers.addModel('gateway', 'local-model', {contextTokens: 32768});
+const token = (await minibot.secrets.get('gateway-token')).value;
+await minibot.providers.setApiKey('gateway', token);
+const {models, selectedModel} = await minibot.providers.listModels('gateway');
+</code></pre>
+<p>进程中通过 SDK 调用对应的 <code>host.providers.*</code>，参数统一放入对象：</p>
+<pre><code class="language-ts">await hostCall('host.providers.addModel', {
+  providerId: 'gateway',
+  model: 'local-model',
+  contextTokens: 32768
+});
+</code></pre>
+<p>限制与行为：</p>
+<ul>
+<li><code>providerId</code> 可用清单局部 ID 或 <code>model.listProviders()</code> 返回的完整 ID；其他插件或使用者自建条目返回 <code>PROVIDER_NOT_FOUND</code>。</li>
+<li><code>contextTokens</code> 为 1–10000000 的正整数，设置后立即影响上下文预算；自动识别不到窗口时应给出准确值。</li>
+<li>每个提供商最多 500 个模型，模型名最长 200 字符。</li>
+<li><code>setApiKey</code> 由宿主加密落盘；若使用者启用了多 Key 模式，多 Key 列表仍优先于单 Key，应由使用者选择关闭多 Key 或自行维护列表。</li>
+</ul>
+<h3 id="启动服务">启动服务</h3>
+<p>本地兼容服务由插件自行启动，宿主不代为拉起。需要随 App 启动时，使用 <code>runtime.resident: true</code> 配合 <code>app.started</code> Hook，声明方式见<a href="tools-runtime.html#常驻与自启动">常驻与自启动</a>。</p>
+<p>Hook 在初始化完成后应尽快返回，服务在进程内继续运行。安装后需要立即使用时，也可提供手动启动动作；服务地址须与 <code>baseUrl</code> 一致，并可从 App 访问。</p></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../../assets/nav-data.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

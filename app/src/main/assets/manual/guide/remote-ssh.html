@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>远程 SSH 模式 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/remote-ssh.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="远程-ssh-模式">远程 SSH 模式 </h1><p>选中一个「远程 SSH」容器后，Mini-AIBOT 进入远程工作区模式：AI 的<strong>读写文件、执行命令、运行终端均发生在远程服务器上</strong>，<code>~/workspace</code> 映射到服务器上的指定目录，手机仅作为操作界面。</p><p>适用于服务器上已有完整工具链，或需要 AI 直接修改远程项目的场景。</p><p>切回本地容器时，会关闭远程终端标签、断开远程执行与文件访问连接，并停止自动重连；再次选中远程容器后会重新连接。</p><h2 id="前置-先建一个-sftp-通道">前置：先建一个 SFTP 通道 </h2><p>远程 SSH 复用「连接与同步」页中 <strong>SFTP</strong> 通道的连接信息（主机、端口、用户名、密码），需先在该页建好一个 SFTP 连接，见<a href="sync.html">工作区同步</a>。</p><p>FTP 通道不支持执行命令，不会出现在可选列表中。</p><h2 id="新建远程-ssh-容器">新建远程 SSH 容器 </h2><p>在「设置 → 容器与镜像」点击右上角 +，选「远程 SSH」：</p><ul><li><strong>名称</strong>：配置的别名。</li><li><strong>SSH 连接通道</strong>：下拉选择一个已配置的 SFTP 通道。无可用通道时，界面提示先前往「连接与同步」页配置，且保存按钮不可用。</li><li><strong>远程工作区路径</strong>：服务器上的目录，AI 的 <code>~/workspace</code> 映射到此。选中通道时会自动填入默认值 <code>~/.minibot/workspaces</code>（按服务器上该用户的真实 home 解析，如 root 用户为 <code>/root/.minibot/workspaces</code>），可修改。</li></ul><p>保存后在列表中选中即生效。</p><p>认证方式沿用所选 SFTP 通道的配置，支持<strong>密码认证</strong>与<strong>SSH 私钥认证</strong>（含带密码保护的私钥）。</p><h2 id="连接行为">连接行为 </h2><ul><li><strong>自动连接</strong>：App 启动时若当前为远程模式，会在后台自动连接；连接失败不会阻塞界面，首次执行命令时会重试。</li><li><strong>保活与自动重连</strong>：连接后每 30 秒发送一次心跳，防止空闲断连；断线后由后台自动重连（5 秒起、最长 30 秒的退避间隔），App 回到前台时也会立即重试一次。</li><li><strong>状态显示</strong>：对话页顶部显示「SSH：已连接 / 连接中 / 连接失败 / 未连接」。未连接时消息区显示等待提示。</li><li><strong>两条独立连接</strong>：文件读写走 SFTP，终端与命令走 exec，各占一条 SSH 连接、互不影响；文件通道异常时自动重建，不中断正在运行的命令。</li><li><strong>路径自举</strong>：远程工作区路径不存在时自动创建；若该目录下无任何子目录，会自动创建一个名为 <code>default</code> 的工作区，保证 AI 始终有可用的 <code>~/workspace</code>。</li></ul><h2 id="本地数据与跟随执行环境的数据">本地数据与跟随执行环境的数据 </h2><p>远程模式下命令、文件、终端与工作区均在服务器上。大多数配置仍存于手机本地；少数「执行环境资源」则跟随环境、以远端为准：</p><table tabindex="0"><thead><tr><th>项目</th><th>说明</th></tr></thead><tbody><tr><td>聊天历史、模型与供应商配置、API Key、应用设置</td><td>全部本地</td></tr><tr><td>记忆（memory）</td><td>本地。项目级记忆按「项目名 + 服务器标识」隔离，不同服务器上的同名工作区不会混淆</td></tr><tr><td>全局技能、子代理与面板脚本</td><td><strong>跟随执行环境</strong>：远程模式下读写<strong>服务器</strong>上的 <code>~/.minibot/skills/</code>、<code>~/.minibot/agents/</code>、<code>~/.minibot/scripts/</code>，与本地模式的那份互相独立</td></tr><tr><td>项目级技能与子代理</td><td>直接读写<strong>服务器工作区</strong>中的 <code>&lt;工作区&gt;/.minibot/skills/</code>、<code>agents/</code>，可随代码库提交到 git</td></tr><tr><td>项目级配置（工具授权规则 / MCP / 技能与子代理的停用名单）</td><td>手机本地。远程模式按「项目名 + 服务器标识」隔离在 App 私有目录下，不写入服务器</td></tr><tr><td>MCP 服务器</td><td>HTTP 类型由 App 直接连接；stdio 类型运行在「默认容器」上（见下），不在远程服务器</td></tr><tr><td>日志与工具输出</td><td>本地</td></tr></tbody></table><p>连接成功后，Mini-AIBOT 会将内置文档同步到服务器的 <code>~/.minibot/docs/</code>，远程模式下 AI 也可查阅这些说明文档。</p><h2 id="默认容器">默认容器 </h2><p>远程模式下仍有部分功能需在本地运行，例如 stdio 类型的 MCP server。它们运行在<strong>默认容器</strong>上，默认为内置 Alpine，可在容器列表下方的「默认容器」分组中改为任意本地容器。</p><p>切换容器（包括切到远程 SSH）后，所有 stdio MCP 会自动断开并用新容器重连；HTTP MCP 不依赖容器，不受影响。</p><h2 id="git-署名与凭据的去向">Git 署名与凭据的去向 </h2><p>Git 页面中保存的<strong>署名</strong>会写入当前执行环境——远程模式下即写入服务器的 git 配置。</p><p><strong>凭据</strong>以手机本地的凭据文件为唯一来源。远程模式下可在凭据页开启「自动注入凭证」（按服务器分别记忆，首次进入时询问），将凭据同步到服务器；开启后，初始化或切换工作区时会同步更新生效范围，仅对当前工作区目录下的仓库生效，不影响服务器上其它目录的仓库，也不改动服务器用户的全局 git 配置。凭据与助手通过 SFTP 上传，完整写入后再替换原文件；上传失败时保留原文件。远端助手找不到匹配凭据时立即返回，不等待手机弹窗；需要补充凭据时请在 App 凭据页添加后同步。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

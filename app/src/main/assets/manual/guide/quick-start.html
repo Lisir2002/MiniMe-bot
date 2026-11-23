@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>快速上手 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/quick-start.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="快速上手">快速上手 </h1><p>从安装到完成第一条 AI 对话。如需先观看操作演示，参见<a href="video-tutorials.html">视频教程</a>。</p><h2 id="系统要求">系统要求 </h2><ul><li>Android 8.0（API 26）及以上</li><li>arm64-v8a 或 x86_64 设备</li></ul><h2 id="下载安装">下载安装 </h2><p>从 <a href="https://github.com/jieapi/aicode/releases/latest" target="_blank" rel="noreferrer">GitHub Releases</a> 下载，三个包按设备选择：</p><table tabindex="0"><thead><tr><th>包名</th><th>适用场景</th></tr></thead><tbody><tr><td><code>armsolo</code></td><td>真机（arm64 设备），体积最小</td></tr><tr><td><code>x86solo</code></td><td>模拟器、Chromebook（x86_64）</td></tr><tr><td><code>universal</code></td><td>通用包，同时含两种架构，体积较大</td></tr></tbody></table><div class="warning custom-block"><p class="custom-block-title">架构要选对</p><p>架构不匹配会导致内置容器无法运行。不确定时使用 <code>universal</code>。</p></div><p>推荐直接点击<a href="../index.html">文档站首页</a>的「下载 APK」，将通过加速镜像直接下载最新正式版的 <code>universal</code> 通用包（镜像不可用时自动回退至 GitHub 原链）。</p><h2 id="_1-配置-ai-供应商">1. 配置 AI 供应商 </h2><div class="tip custom-block"><p class="custom-block-title">首次启动有新手引导</p><p>首次启动时会自动开启新手引导（1.12.0 新增），依次引导完成下面几步；也可随时点击「跳过」，或之后在「设置 → 重新运行新手引导」再次启动。</p></div><p>Mini-AIBOT 自身不提供模型，需要先接入一个模型服务。</p><ol><li>点主页左上角菜单按钮打开侧边栏，点底部「设置」。</li><li>进入「AI 配置 → AI 供应商」，点右上角 + 新建，在「配置」标签填写四项： <ul><li><strong>名称</strong>：别名，例如「官方 OpenAI」。</li><li><strong>上游格式</strong>：<code>OpenAI</code> / <code>Anthropic</code> / <code>Gemini</code> 三选一。第三方中转站一般选 <code>OpenAI</code>。</li><li><strong>API Key</strong>：你的密钥，形如 <code>sk-xxx</code>。</li><li><strong>Base URL</strong>：API 根地址，<strong>留空时按上游格式使用官方地址</strong>；用第三方中转时填入中转服务的地址。</li></ul></li><li>底部切到「模型」标签添加模型： <ul><li>点击「拉取模型」从服务端同步可用列表，点击每行右侧的「+」逐个添加，或用右上角「全部添加」一键加入。</li><li>点击右上角 + 手动输入模型名（例如 <code>gpt-4o</code>）。中转站模型名拉取不全时使用此方式。</li><li>可选：点击模型行编辑元数据（上下文窗口、价格、图片输入与工具调用等能力开关）。</li></ul></li></ol><p>填完退出编辑页时会自动保存，没有单独的保存按钮。</p><h2 id="_2-选择模型">2. 选择模型 </h2><p>回到聊天主页，点击输入框下方工具栏的模型按钮，在弹窗中选择刚添加的模型。顶部搜索框可以筛选，模型按供应商分组显示，点击分组标题可以折叠或展开。</p><h2 id="_3-准备执行环境">3. 准备执行环境 </h2><p>默认使用内置的本地容器，无需任何配置。第一次使用时，在主页点击进入终端，按提示完成一次初始化即可（解压系统、安装基础工具），之后 AI 就能正常执行命令。</p><p>如需把远程服务器当执行后端，见<a href="remote-ssh.html">远程 SSH 模式</a>；容器与镜像的详细设置见<a href="container.html">容器与镜像</a>。</p><h2 id="_4-开始对话">4. 开始对话 </h2><p>在输入框输入内容后点击发送。输入框下方工具栏最左侧的模式按钮可以在 BUILD、PLAN、AUTO 之间切换，区别见<a href="modes.html">三种模式</a>。</p><h2 id="实用贴士">实用贴士 </h2><ul><li>在主页空会话中选择的模型将被记录为新会话的默认模型，后续新建会话自动沿用。</li><li>识图、生图与标题总结支持独立指定专属模型，详见<a href="default-models.html">默认模型</a>。</li><li>AI 修改代码前会自动创建快照，支持一键安全回滚，详见<a href="checkpoint.html">检查点与撤销</a>。</li><li>执行编译等耗时任务前，建议开启<a href="app-permissions.html">软件权限</a>中的后台运行保活，防止系统在切换后台时终止进程。</li></ul></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>备份与还原 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/backup.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="备份与还原">备份与还原 </h1><p>「设置 → 备份与还原」可以把应用配置、聊天历史、凭据和工作区文件导出成一个加密压缩包，也能从备份还原回来。</p><h2 id="导出">导出 </h2><p>页面上方勾选要导出的范围：AI 供应商、Git 凭据、连接与同步、聊天历史、MCP 服务器、授权规则、应用设置、工作区文件。勾选状态会记住，下次进来沿用。</p><p>其中<strong>工作区文件默认关闭</strong>，需要时手动打开。它会打包所有本地模式的内部工作区文件，包含 <code>.git</code> 目录，因此仓库历史和未推送的提交都能完整还原。通过「添加外部工作区」加进来的外部工作区属于你设备上的原始目录，不会被打包。排除规则是各工作区自己的 <code>.gitignore</code> 加上同步功能的默认忽略清单（<code>node_modules</code>、<code>build</code>、<code>dist</code> 等），符号链接不备份。</p><div class="tip custom-block"><p class="custom-block-title">代码优先用 Git 备份</p><p>Git 仓库本身就完整保存了代码和历史，这里的导出更适合作为额外的备用手段，而不是主要的代码备份方式。</p></div><p>点「导出备份」后会弹窗设置口令：</p><ul><li><strong>填写口令</strong>：使用 AES-GCM 加密。</li><li><strong>留空</strong>：输出明文 tar.gz。</li></ul><p>导出的包里含 API Key 等凭据，通过系统文件选择器保存到你指定的位置。</p><div class="danger custom-block"><p class="custom-block-title">务必牢记加密口令</p><p>加密备份在遗失口令时无法解密恢复，没有任何后门或找回途径。</p></div><h2 id="导入">导入 </h2><p>从备份文件还原，采用<strong>合并方式</strong>，不会清除现有数据。需要输入对应的口令，未加密的备份留空即可。</p><p>只有导出时勾选了「应用设置」的备份才会恢复主题、配色和偏好设置。单独导出的聊天记录，以及未勾选「应用设置」的备份，导入后会保留当前应用设置。</p><p>加密备份在预览前会完整解密并校验一次，确认恢复时复用校验结果，不再重复解密。较大的备份需要足够的应用内部存储空间保存临时压缩包；完成、取消或失败后会清理临时文件。</p><p>如果备份中含工作区文件，会先弹出「恢复工作区」选择弹窗，列出备份中的每个工作区（名称和文件数），你可以勾选要恢复哪些。</p><div class="warning custom-block"><p class="custom-block-title">恢复工作区会直接覆盖</p><p>勾选的工作区会覆盖本地同名工作区里的文件，且无法撤销。本地没有同名工作区时会自动新建一个再写入，因此更换设备或重装后不会丢数据。远程模式的工作区（文件在服务器上）不参与还原。</p></div><p>导入完成后会显示还原数据的汇总清单：供应商、Git 凭据、远程连接、远程挂载、聊天会话、聊天消息、待办项、MCP 服务器、全局授权规则、工作区文件各恢复了多少。</p><p>聊天会话会按备份时的所属工作区归位：本地有同名工作区直接还原过去，没有同名工作区时会自动新建一个空工作区再挂入会话（与「恢复工作区」自动新建的逻辑一致），更换设备或重装后各工作区的会话不会集中到同一处。</p><h2 id="网络备份">网络备份 </h2><p>除了导出成本地文件，还可以把备份直接上传到云端，或从云端拉回还原。备份页底部有「本地备份 / 网络备份」两个标签：本地页管导出范围与导出/导入，网络页管备份目标。切到「网络备份」后用右上角「＋」添加<strong>备份目标</strong>，支持两类：</p><ul><li><strong>WebDAV</strong>：填服务器地址（含路径，如 <code>https://dav.jianguoyun.com/dav</code>）、远端目录、用户名和密码。</li><li><strong>对象存储 (S3)</strong>：填服务地址、区域、存储桶、Access Key / Secret Key，可加 Session Token 与对象前缀，路径风格寻址可切换。兼容 AWS S3、Cloudflare R2、阿里云 OSS、腾讯云 COS、MinIO 等 S3 兼容服务。</li></ul><p>每个目标都能「测试连接」验证配置。配置好后：</p><ul><li><strong>上传到云端</strong>：导出当前勾选的备份并上传到所选目标；可设置口令加密，留空则上传明文。</li><li><strong>从云端恢复</strong>：列出所选目标上的备份（按时间倒序），选一个下载并还原，流程与从本地文件导入一致（含口令校验与工作区勾选）。</li></ul><p>每个目标卡片底部都有「上传」「恢复」按钮；点卡片进入编辑，左滑删除。</p><p>远端文件名形如 <code>minibot-backup-&lt;时间戳&gt;.tar.gz</code>。备份目标里的密码与密钥由系统密钥库（Android Keystore）加密保存，与备份本身的加密口令相互独立。</p><div class="warning custom-block"><p class="custom-block-title">云端备份同样含凭据</p><p>未加密的备份包含 API Key 等明文凭据，放在公共存储时请务必设置口令加密。</p></div><h2 id="补充说明">补充说明 </h2><p>备份口令只作用于导出的备份文件本身。应用内部存储的 API Key、连接密码、SSH 私钥等敏感配置另由系统密钥库（Android Keystore）加密保存，与备份口令相互独立；更换设备时请通过备份导入迁移，直接拷贝应用数据目录会因密钥不匹配而无法解密。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

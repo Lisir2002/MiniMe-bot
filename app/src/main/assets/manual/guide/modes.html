@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>三种模式（Build / Plan / Auto） · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/modes.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="三种模式-build-plan-auto">三种模式：Build / Plan / Auto </h1><p>输入框左侧的模式按钮点击循环切换：BUILD → PLAN → AUTO → BUILD。三种模式的区别是 AI 的<strong>权限范围</strong>。</p><h2 id="build-构建模式">BUILD（构建模式） </h2><p>默认模式，功能完整。AI 可以写文件、改代码、执行构建命令，但每次需要授权的操作都会弹窗询问。</p><p>日常开发建议使用此模式。被内置安全防护拦下的高危命令（如 <code>rm</code> 根目录），AI 可带 <code>elevate: true</code> 重试，转由你一次性授权（见<a href="permissions.html">工具授权</a>）。</p><h2 id="plan-计划模式">PLAN（计划模式） </h2><p>进入这个模式后，工具权限策略会拦截编辑文件、执行命令等实施操作。AI 可以使用允许的只读工具及相应动作，读取代码、检索资料、回答问题并构思方案。</p><p>适合这些场景：</p><ul><li>你还不确定怎么改，想先让 AI 探索代码库、给出方案。</li><li>改动涉及重要架构取舍、影响面不明或风险较高，想先看计划再决定。</li><li>你只想问问题、了解现有实现，不希望它动手。</li></ul><p>AI 会按风险与不确定性判断是否需要先规划；目标明确、风险可控或方案已获批准时，可以直接推进。纯问答与方案讨论可保持 PLAN，需要开始实施时再申请退出并等待审批。</p><h2 id="auto-自动模式">AUTO（自动模式） </h2><p>普通工具调用（写文件、执行命令、终端操作）自动批准，AI 可在当前任务范围内连续执行。难以撤销、影响共享状态或超出当前任务范围的操作，仍需取得针对该操作的明确授权，例如强推、修改远端、发消息、提/合 PR。</p><div class="danger custom-block"><p class="custom-block-title">这个模式权限极大</p><p>灾难性删除（如 <code>rm</code> 根目录或系统目录）以及无法静态判定的疑似破坏性命令仍会被拦截；确有必要时，AI 可申请一次性授权后重试。<code>Shizuku</code> 宿主 Android 操作仍会逐次确认，其余普通工具调用自动批准。可在「设置 → 工具授权」中开启「禁用安全拦截」取消这些兜底确认。适合你已清楚了解风险、希望 AI 全自动执行批量任务的场景。不熟悉的项目或不确定 AI 会执行什么操作时，不建议使用。</p></div><h2 id="ai-也可主动请求切换">AI 也可主动请求切换 </h2><p>除了你手动点按钮，AI 也可以主动请求进入或退出 PLAN 模式。准备实施时，AI 会先在回复中展示计划，再在同一轮回复中发起退出申请；你在计划审查面板批准后，才会恢复进入 PLAN 前的模式并开始实施。计划正文用于审查修改范围和验证安排，申请理由只是简要概括。</p><p>有一个方向上的限制：<strong>AUTO 模式只能由你手动进入</strong>，AI 无法通过工具切进 AUTO。但反过来，处于 AUTO 模式时 AI 可以主动切到 PLAN——这是 AI 退出 AUTO 的唯一路径。</p><h2 id="退出-plan-会回到进入前的模式">退出 PLAN 会回到进入前的模式 </h2><p>PLAN 是临时状态：进入 PLAN 时会记下当时的模式，退出时自动恢复。从 AUTO 进入 PLAN，计划做完退出后回到 AUTO；从 BUILD 进入 PLAN，退出后回到 BUILD。不会再一律落回 BUILD。</p><p>注意：退出 PLAN 仍需你在计划审查面板上批准（点「批准并实施」），批准后模式才真正恢复。进入或退出成功后，工具结果会直接显示当前模式及对应说明。</p><h2 id="运行中也能切换">运行中也能切换 </h2><p>AI 收到的运行模式提醒由应用自动附加，用于说明当前权限，不属于你的消息内容，也不代表你新增了任务或授权。提醒带有明确的开始和结束标记，便于与原始请求区分。</p><p>模式按钮在 AI 正在执行任务时同样可用。你在 AI 执行任务的过程中切换模式，它会<strong>当轮立即生效</strong>：AI 会收到一条模式切换通知，手头任务从那一刻起按新模式处理（例如你中途切到 AUTO，后续操作就不再逐次弹窗；切到 PLAN，后续写操作会被拦截），无需等待本轮结束。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

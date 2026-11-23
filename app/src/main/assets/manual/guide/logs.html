@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>日志与故障排查 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/logs.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="日志与故障排查">日志与故障排查 </h1><p>App 出问题时，日志是最直接的线索。「设置 → 日志」可以直接在应用内看。</p><h2 id="应用内看日志">应用内看日志 </h2><p>进去默认定位到今天的日志，页面上能做这些事：</p><ul><li><strong>日志等级</strong>：顶部设置行显示当前等级，点击从底部面板选择（Verbose / Debug / Info / Warn / Error / None）。遇到 bug 时建议调成 <code>Debug</code>，日常保持 <code>Info</code>。正式版默认是 <code>Info</code>，过滤掉调试噪音。</li><li><strong>切换文件</strong>：点「日志文件」行从底部弹出日期列表，默认选中今天。</li><li><strong>搜索与复制</strong>：关键字实时过滤，右上角一键复制当前筛选结果。</li><li><strong>彩色分级</strong>：Verbose 灰、Debug 蓝、Info 绿、Warn 橙、Error 红。</li><li><strong>单行复制</strong>：点任意一行复制这条完整日志（含时间、等级、来源）；长按弹菜单可以选复制范围——本条、本条及堆栈、或只要消息内容。</li><li><strong>实时滚动</strong>：默认开启，每 3 秒自动刷新并跟随最新；关掉后停止刷新，保持你手动浏览的位置。</li></ul><p>为了避免大日志卡顿，应用内只显示当前文件在筛选条件下的最后一部分，完整文件需到文件系统查看。</p><h2 id="日志文件在哪">日志文件在哪 </h2><div class="language- vp-adaptive-theme"><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>/storage/emulated/0/Android/data/com.mini.bot/files/logs/</span></span></code></pre></div><p>无需 root 权限，用手机自带的文件管理器即可打开。</p><p>工作区项目文件与 AI 配置存放在应用私有目录，普通文件管理器看不到，访问方式见<a href="files.html#工作区文件在手机上的位置">文件浏览与代码编辑</a>。</p><h2 id="按-mcp-名称过滤">按 MCP 名称过滤 </h2><p>排查 MCP 连不上的问题时，进「设置 → MCP 服务器」，编辑某个服务器后点右上角的日志按钮，会跳到日志页并自动按这个服务器名过滤（页面顶部有过滤徽章，可一键清除）。列表页右上角的日志按钮则是看全部日志。</p><h2 id="崩溃如何处理">崩溃如何处理 </h2><p>App 遇到未捕获的异常<strong>不会直接闪退</strong>，而是全屏显示一个崩溃错误页：</p><ul><li>页面展示崩溃时的版本、设备、时间和完整堆栈。</li><li>点「复制错误信息」可以复制完整的崩溃报告（含堆栈和日志文件路径），直接粘贴发给开发者即可，无需自行查阅日志。</li><li>可以选「重启应用」回到主界面，或者「退出应用」完全退出。</li></ul><p>崩溃日志同样会落盘到上面那个 <code>logs/</code> 目录。</p><p>除上述未捕获异常外，Native 崩溃、ANR（无响应）、被系统因内存不足杀死、被信号杀死这类不会走到错误页的退出，同样会在下次打开 App 时自动记录到 <code>logs/</code> 目录，便于排查「闪退了但没看到错误页」的情况。</p><h2 id="长任务切后台被中断如何处理">长任务切后台被中断如何处理 </h2><p>如果 AI 执行长任务（如编译、深度代码审查）或终端运行耗时命令时切到后台经常被杀掉，请前往「设置 → 软件权限」开启<strong>后台运行保活</strong>、<strong>忽略电池优化</strong>与<strong>自启动管理</strong>，详见<a href="app-permissions.html">软件权限</a>。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

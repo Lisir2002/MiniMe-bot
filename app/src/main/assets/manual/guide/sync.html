@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>工作区同步 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/sync.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="工作区同步">工作区同步 </h1><p>把手机上的工作区目录同步到远程服务器。入口在「设置 → 运行环境 → 连接与同步」，页面底部有四个标签页。</p><div class="tip custom-block"><p class="custom-block-title">本页与「容器与镜像」的分工</p><p>本页只负责<strong>连接通道和文件同步</strong>。如果你想让 AI 直接把远程服务器当执行环境（命令、文件、终端都在服务器上运行），那是另一项功能，见<a href="remote-ssh.html">远程 SSH 模式</a>——它会复用这里建好的 SFTP 通道。</p></div><h2 id="连接配置">连接配置 </h2><p>点右上角 + 新建一个连接通道：</p><ul><li><strong>协议类型</strong>：<code>SFTP</code>（默认端口 22）或 <code>FTP</code>（默认端口 21）。</li><li><strong>连接名称</strong>：别名。</li><li><strong>主机地址</strong>：IP 或域名。</li><li><strong>端口 / 用户名 / 认证方式</strong>：必填。认证方式可以选择<strong>密码</strong>，或选择<strong>密钥</strong>（从「SSH 密钥」页已添加的私钥中选择；加密私钥的口令在密钥编辑页里填，连接这里不再重复填）。</li><li><strong>测试连通性</strong>：保存前可先测试。</li></ul><p><strong>排序</strong>：长按通道行的名称区域上下拖动可调整顺序（重启后保持）。该顺序有实际影响——新建挂载时的「关联连接通道」下拉、编辑容器时的「SSH 通道」下拉，默认选中的都是列表第一项。</p><h3 id="ssh-密钥与主机指纹">SSH 密钥与主机指纹 </h3><p>点顶栏的钥匙图标进入，底部两个标签页：</p><p><strong>密钥</strong>：管理登录用的私钥。点右上角 + 有两种添加方式：<strong>从文件导入</strong>（从文件选择器选私钥文件）或<strong>粘贴密钥</strong>（进入与编辑页相同的表单，粘贴私钥内容并填名称、口令，名称留空自动命名）。私钥会加密复制到私有目录并解析出公钥指纹，加密的私钥会标注「需口令」。点某条密钥进入编辑页：可改名称和口令（加密私钥的 passphrase），私钥内容只读（默认隐藏，点右侧眼睛可查看）。口令在密钥上设置，连接选用该密钥时会自动带上。左滑删除。</p><p>密钥列表会在进入页面后异步加载；导入、修改或删除后自动刷新。保存带口令的密钥时无需停留等待，返回列表后即可查看更新结果。</p><p><strong>指纹</strong>：管理已信任的服务器主机指纹。首次连接某台服务器时会弹窗显示密钥类型和 <code>SHA256:</code> 指纹，确认「信任并连接」后保存下来，之后直接放行。如果服务器指纹变了会再次要求确认——这是防中间人攻击的机制，指纹突然变化要当心。左滑删除后下次连接重新确认。</p><h2 id="挂载目录">挂载目录 </h2><p>连接通道只解决「能否连接」，还需要建立「哪个本地工作区对应哪个远程目录」的映射。点右上角 + ：</p><ul><li><strong>关联连接通道</strong>：下拉选一个已建好的连接。</li><li><strong>远程目标目录</strong>：右侧文件夹图标可以打开远程目录浏览器逐级点选。</li><li><strong>映射到本地工作区</strong>：下拉选一个本地工作区（需要先在侧边栏创建）。</li><li><strong>应用启动时自动连接</strong>：打开后会跟随当前工作区——App 启动或切换工作区时，自动连接映射到当前工作区的挂载并监听本地改动，同时断开其它工作区的挂载。连接失败会按退避间隔重试；切换到其它工作区或手动断开时会停止该挂载的重试，尚未完成的旧连接也不会启用同步。</li></ul><p>保存时如果已存在相同的「通道 + 远程目录 + 工作区」组合，会提示挂载已存在并拦截。</p><p>连接成功后卡片上有几个操作：断开连接、上传变更、下载全部，以及右侧「更多」菜单（强制全量上传、清除同步记录）。列表行左滑可删除。</p><div class="danger custom-block"><p class="custom-block-title">同步是单向的</p><p>自动同步只把<strong>连接后的本地改动推到远程</strong>（监听本地文件的增删改），远程目录的变化<strong>不会</strong>自动拉下来。连接时不会自动上传已有文件，需要时请手动点「上传变更」。</p><p>需要把远程文件拉到本地时手动点「下载全部」，但要注意这是<strong>全量覆盖式</strong>拉取：会覆盖本地同名文件（不删除本地多出来的文件），本地未保存的修改可能被覆盖。使用前请确认清楚。</p></div><h3 id="哪些文件会被上传">哪些文件会被上传 </h3><p>「上传变更」与自动同步都<strong>只传输有改动的文件</strong>：每个文件按「大小 + 修改时间」和上次成功同步的记录比对，一致就跳过、不再重传；大小相同但修改时间不同时，再用内容哈希（SHA-256）兜底判断，内容确实没变也会跳过。这些同步记录保存在 App 私有目录，重启后依然有效。</p><p>判断是保守的：拿不准就上传，不会漏传。右侧「更多」菜单里：</p><ul><li><strong>强制全量上传</strong>：忽略同步记录，把全部文件重传一遍。用于远程目录被外部清空或改动、需要强制覆盖的场景。</li><li><strong>清除同步记录</strong>：删除该挂载的同步记录，让下次上传重新视为全新（等价于一次全量）。</li></ul><p>另外，对确实改动过的文件，SFTP/FTP 只能整体重传，无法只传输差异部分。</p><p>连接超时是 15 秒，主机不可达时会快速报错而不是一直等。已连接的挂载每 15 秒探活一次，断线时卡片显示「重连中」，并按 5 秒、10 秒、20 秒、40 秒、60 秒的间隔自动重连，成功后恢复同步。</p><h2 id="内置-ftp-服务端">内置 FTP 服务端 </h2><p>在手机上开启一个 FTP 服务，便于用电脑管理手机上的项目。</p><p>手机和电脑要连同一个 WiFi。开启后界面会显示 FTP 地址（如 <code>ftp://192.168.1.100:2121</code>，点地址可复制），在电脑的文件资源管理器或 FileZilla 里访问即可，能管理 <code>projects/</code> 下的全部项目。</p><p>可配置的参数有监听端口、登录用户名、登录密码、是否允许匿名访问、是否开机自启，改完点底部「保存配置」。服务运行时保存会重启服务并断开现有连接，之后只有当前配置的账号可以登录；关闭匿名访问后，匿名登录也会失效。<code>anonymous</code> 是匿名登录的保留名称，请为普通账号使用其它用户名。</p><div class="warning custom-block"><p class="custom-block-title">注意安全</p><p>允许匿名访问意味着同一网络下的任何设备都能读写你的项目文件。在公共 WiFi 下请勿开启匿名访问，使用完毕后建议关闭服务。</p></div><h2 id="同步设置">同步设置 </h2><ul><li><strong>遵循 .gitignore 规则</strong>：打开后自动读取项目根目录的 <code>.gitignore</code> 过滤要同步的文件。</li><li><strong>单次最大同步队列数量</strong>：防止一次性改动大量文件时导致服务端请求过载或网络拥塞，超出的操作会排队分批执行。</li></ul><p>另外同步引擎始终会忽略常见的构建和缓存目录（<code>node_modules</code>、<code>.git</code>、<code>build</code>、<code>dist</code> 等），无需手动配置。</p><p>改完点底部「保存设置」生效。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

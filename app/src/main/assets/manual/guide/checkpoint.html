@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>检查点与撤销 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/checkpoint.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="检查点与撤销">检查点与撤销 </h1><p>在 AI 执行文件修改操作前，Mini-AIBOT 会自动保存改动前的文件快照并创建检查点。如果生成结果未达预期或引入了意外问题，可随时一键回退到指定节点。该机制完全自动运行，无需手动干预。</p><h2 id="回滚方式">回滚方式 </h2><p>在聊天记录里找到你想退回的那条<strong>你自己发的消息</strong>，其左侧有一个撤销图标，点开即该检查点的操作菜单。</p><p>菜单里有三个选择：</p><table tabindex="0"><thead><tr><th>操作</th><th>代码</th><th>对话</th></tr></thead><tbody><tr><td>恢复代码与对话</td><td>回到这条消息之前的状态</td><td>删掉这条之后的消息，原来的提问会填回输入框</td></tr><tr><td>仅恢复对话</td><td>保持现状不变</td><td>删掉这条之后的消息</td></tr><tr><td>仅恢复代码</td><td>回到这条消息之前的状态</td><td>保持完整不变</td></tr></tbody></table><p>常用的是第一个：相当于「这一轮重来」，代码和对话一起回到起点，你可以修改提问后再发一次。</p><p>恢复对话会删除所选消息及后续消息，撤销现有压缩摘要，并恢复回退点之前保留的原始对话，避免摘要带入后续事实。「仅恢复代码」不改变对话。恢复后历史过长时，下一次发送前会重新压缩；已经发生的调用用量不会清零。旧版已经截断或缺失的内容无法凭回退补回。</p><p>如果只是想让 AI 忘掉走偏的几轮讨论、但保留它已经写好的代码，用「仅恢复对话」。反之，代码想丢弃、讨论过程想留着复盘，用「仅恢复代码」。</p><h2 id="适用边界与限制">适用边界与限制 </h2><p>检查点只记录 AI <strong>通过文件工具</strong>做的修改。如果文件是被终端里的命令改掉或删掉的（<code>rm</code>、<code>mv</code>、<code>sed</code> 这类，无论是你自己输入的还是 AI 执行的），检查点无法精确还原。</p><h3 id="与其他会话同时改同一文件">与其他会话同时改同一文件 </h3><p>回滚时会先判断每个文件「是不是被当前会话之外的改动碰过」：</p><ul><li>文件在检查点之后被<strong>其他会话或你自己</strong>改过（当前会话没见过那些改动）→ 该文件<strong>跳过</strong>，不改动，并在提示里列出文件名。这样不会把你或别的会话刚写的代码悄悄抹掉。</li><li>文件是<strong>当前会话</strong>自己改的 → 照常还原，这正是撤销的用途。</li></ul><p>如果提示里列出了被跳过的文件，说明那些改动被有意保留了。想连它们一起回退，先手动确认内容或借助 Git。</p><p>已知局限：本次对话中<strong>新建</strong>的文件，回滚时一律删除，即使期间别的会话往里写过内容——删除前无法可靠判断该文件是否被改过。</p><p>这种情况下建议通过 Git 恢复：只要文件曾被 Git 跟踪过（提交过一次即可），去 Git 页的状态标签页长按该文件，选「恢复文件」或「回退改动」即可取回，与它是怎么被删的无关。反之，从没提交过的新文件不在这层保护里。</p><p>重要的项目建议同时用 Git 管理，检查点适合处理单轮改动的回退，Git 才是完整的版本安全网。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

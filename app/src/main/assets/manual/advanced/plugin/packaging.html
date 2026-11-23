@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>打包、导入与排错 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../../assets/manual.css">
+</head>
+<body data-root="../../" data-page="advanced/plugin/packaging.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../../index.html"><img src="../../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><h1 id="打包导入与排错">打包、导入与排错</h1>
+<p>开发期间使用<a href="quick-start.html#_3-开发者侧载">开发者侧载</a>，交付时将清单和运行文件打成 <code>.zip</code>。源码的构建约定见 <a href="source-build.html">TypeScript + Vue 开发与构建</a>。</p>
+<h2 id="打包">打包</h2>
+<h3 id="独立项目">独立项目</h3>
+<p>在插件项目根目录先检查类型并构建，再打包运行文件。以下命令适用于独立模板的默认结构：</p>
+<pre><code class="language-bash">npm run typecheck
+npm run build
+zip -r ../my-plugin-1.0.0.zip plugin.json dist schemas
+</code></pre>
+<p>根据清单补充需要发布的目录与文件：</p>
+<table>
+<thead>
+<tr>
+<th>内容</th>
+<th>是否放入包中</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>plugin.json</code>、运行时入口、页面 HTML 与 assets</td>
+<td>必须包含清单引用的文件与其依赖资源</td>
+</tr>
+<tr>
+<td><code>skills/</code>、<code>agents/</code>、<code>mcp/</code>、<code>schemas/</code> 等</td>
+<td>声明了对应能力时包含</td>
+</tr>
+<tr>
+<td><code>package.json</code> / 锁文件、<code>requirements.txt</code></td>
+<td>使用 <code>runtime.dependencies</code> 时保留</td>
+</tr>
+<tr>
+<td><code>src/</code>、开发类型、构建脚本</td>
+<td>运行时不使用，可留在源码仓库</td>
+</tr>
+<tr>
+<td><code>node_modules</code>、虚拟环境、<code>.git</code>、缓存、测试数据、密钥</td>
+<td>排除</td>
+</tr>
+</tbody>
+</table>
+<p>压缩包根部必须直接包含 <code>plugin.json</code>，不能是 <code>my-plugin/plugin.json</code>。页面 assets 也要随包发布，不能只放 HTML。</p>
+<h3 id="主仓库项目">主仓库项目</h3>
+<p>位于 <code>plugins/samples/</code> 的项目可在仓库根目录使用打包脚本，<code>&lt;目录名&gt;</code> 替换为实际目录名：</p>
+<pre><code class="language-bash">python3 scripts/package-plugins.py &lt;目录名&gt;
+</code></pre>
+<p>脚本先构建，再生成 <code>plugin-packages/&lt;插件ID&gt;-&lt;版本&gt;.zip</code>；省略目录名会打包全部项目。脚本会跳过 <code>node_modules</code>、<code>.git</code> 等目录，并检查压缩包大小与文件数量。</p>
+<h2 id="安装限制">安装限制</h2>
+<p>任意一项超出限制都将拒绝整个包，侧载也受这些限制约束：</p>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>压缩包大小</td>
+<td>16 MiB</td>
+</tr>
+<tr>
+<td>文件数量</td>
+<td>512 个</td>
+</tr>
+<tr>
+<td>单个文件</td>
+<td>4 MiB</td>
+</tr>
+<tr>
+<td>解压后总大小</td>
+<td>32 MiB</td>
+</tr>
+<tr>
+<td>路径</td>
+<td>不能是绝对路径，不能含 <code>..</code>、<code>.</code>、空段或反斜杠，长度不超过 200，层级不超过 8</td>
+</tr>
+<tr>
+<td>重复文件</td>
+<td>不允许，包括仅大小写不同的情况</td>
+</tr>
+</tbody>
+</table>
+<p>声明文件另有单文件上限：</p>
+<table>
+<thead>
+<tr>
+<th>内容</th>
+<th>上限</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>plugin.json</code></td>
+<td>256 KiB</td>
+</tr>
+<tr>
+<td>运行时入口</td>
+<td>512 KiB</td>
+</tr>
+<tr>
+<td>技能 / 子代理 Markdown</td>
+<td>512 KiB</td>
+</tr>
+<tr>
+<td>页面 HTML</td>
+<td>512 KiB</td>
+</tr>
+<tr>
+<td>工具 JSON Schema</td>
+<td>256 KiB</td>
+</tr>
+<tr>
+<td>MCP 配置</td>
+<td>256 KiB</td>
+</tr>
+</tbody>
+</table>
+<h2 id="导入与更新">导入与更新</h2>
+<p>将 <code>.zip</code> 传输到手机，打开「设置 → 插件」，点击右上角导入并选择文件。安装确认页会列出插件提供的能力，确认后启用。</p>
+<ul>
+<li>同一 <code>id</code> 的包会替换原安装目录，版本号相同时也可覆盖；每次导入都要重新确认。</li>
+<li>停用仅关闭能力；卸载会清理插件目录和 <code>data://</code> 数据。</li>
+<li>插件数据、授权与运行状态由宿主另存，不写回安装包。</li>
+<li>侧载项目不参与在线更新，普通 <code>.zip</code> 导入仍可使用。</li>
+</ul>
+<h2 id="导入失败排查">导入失败排查</h2>
+<table>
+<thead>
+<tr>
+<th>提示</th>
+<th>检查内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>压缩包根目录里没有 plugin.json</td>
+<td>打包时是否多嵌套了一层目录</td>
+</tr>
+<tr>
+<td>plugin.json 缺少 / 无效字段</td>
+<td>按错误中的字段路径对照<a href="manifest.html">清单参考</a></td>
+</tr>
+<tr>
+<td>此版本不支持的字段 / 内容类型</td>
+<td>当前宿主是否支持该能力；未知字段会拒绝安装</td>
+</tr>
+<tr>
+<td>声明了 handler 但未声明运行时</td>
+<td>带 handler 的工具、Hook 和动作均需要 <code>runtime</code></td>
+</tr>
+<tr>
+<td>uiEntries 声明无效</td>
+<td>按<a href="manifest.html#uientries">槽位规则</a>检查 <code>slot</code> 与 <code>page</code> / <code>handler</code> 的组合，<code>backup.data</code> 为数据选项</td>
+</tr>
+<tr>
+<td>声明了备份事件但未声明 contributes.backup</td>
+<td>补充<a href="manifest.html#backup">备份声明</a></td>
+</tr>
+<tr>
+<td>内容无效</td>
+<td>Markdown 正文是否为空、子代理是否指定了 <code>provider</code> / <code>model</code>、schema 根是否为 object、MCP 配置是否有效</td>
+</tr>
+<tr>
+<td>清单引用的文件不存在</td>
+<td>路径、构建产物和大小写是否一致</td>
+</tr>
+<tr>
+<td>同一类型内 id 重复</td>
+<td>技能、工具、页面等在各自类型内是否重名</td>
+</tr>
+<tr>
+<td>路径不安全 / 文件太大 / 重复文件</td>
+<td>对照<a href="#安装限制">安装限制</a>检查包内容</td>
+</tr>
+</tbody>
+</table>
+<p>例如 <code>contributes.tools[0].inputSchema</code> 指向第一个工具的参数文件声明，可直接定位修改。</p>
+<h2 id="日志与调试">日志与调试</h2>
+<p>打开「设置 → 日志」，搜索插件 ID 或 <code>Plugin</code>，查看进程启动、调用失败、Hook 超时和浮层创建错误。</p>
+<ul>
+<li>TypeScript 运行时可用 SDK 的 <code>log(message)</code> 写入日志；handler 返回 <code>logs</code> 的规则见 <a href="tools-runtime.html#handler-约定">handler 约定</a>。</li>
+<li>运行时启动失败时，检查本地容器是否已准备 Node.js / Python 环境，以及运行期依赖是否已安装。</li>
+<li>页面空白时，检查构建是否完成、清单页面路径与 assets 是否齐全，并在 Mini-AIBOT 真机上验证宿主桥调用。</li>
+<li>侧载未更新时，确认「开发者侧载」仍开启，构建结果已同步到侧载目录；必要时在项目详情手动重载。</li>
+<li>Shizuku、浮层或备份事件失败时，先检查插件详情中的独立授权；提供商调用失败时，检查兼容服务是否就绪。</li>
+</ul>
+<h2 id="发布前检查">发布前检查</h2>
+<ul>
+<li>清单中的标识、版本、仓库地址正确，引用文件全部存在且大小写一致。</li>
+<li>运行时和页面已经重新构建，文件大小符合限制。</li>
+<li>Markdown 正文、工具 schema、MCP 配置通过对应规则检查。</li>
+<li>包中包含页面 assets 与必要的依赖文件，排除了密钥和开发缓存。</li>
+<li>在真机验证安装、启用、工具调用、页面操作、停用与卸载。</li>
+<li>发布到 GitHub Release 时，资产名使用 <code>{id}_{version}.zip</code>；在插件索引中更新 <code>repository</code> 和 <code>version</code>。</li>
+</ul></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../../assets/nav-data.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

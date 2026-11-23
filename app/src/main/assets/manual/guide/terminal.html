@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>终端 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/terminal.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="终端">终端 </h1><p>Mini-AIBOT 内置一个完整的终端。本地模式下它连着手机上的 Linux 容器，远程模式下它连着你的 SSH 服务器——两种情况都是真实的 shell，可以安装软件包、编译、运行服务。</p><p>从聊天页顶部标题栏的「终端」进入。点左上角返回按钮回到聊天页，返回过程中重复点击不会继续退出聊天页。返回不会关闭终端标签。</p><h2 id="ai-如何选择命令工具">AI 如何选择命令工具 </h2><p>AI 会按任务是否耗时、是否需要保留会话来选择执行方式：</p><ul><li><strong>Bash</strong>：用于短时、一次性的命令，例如查询状态、快速检查；执行结束后返回结果。</li><li><strong>终端</strong>：用于构建、安装依赖等耗时任务，开发服务器等常驻进程，以及需要持续输入的交互操作。你可以在终端标签里查看输出和继续操作。</li></ul><p>对于会自行结束的耗时任务，AI 可以开启完成通知，任务结束后再继续处理结果；常驻服务和交互程序则按需查看输出、发送输入或停止进程。</p><h2 id="标签管理">标签管理 </h2><p>终端支持多个标签同时存在，顶部标签栏可以横向滑动，切换时当前标签会自动滚动到可见位置。</p><ul><li>标签名前的圆点表示状态：绿色是运行中，灰色是已结束。</li><li>点标签右侧的 × 关闭，点标签栏末尾的 + 新建。关掉当前标签后会自动切到相邻的一个。</li><li>AI 执行命令时开启的终端也会出现在这里，你可以随时切过去查看它的运行情况。</li><li>AI 为后台任务启用完成通知后，本地与远程 SSH 模式都会在任务结束时把退出码和末尾输出送回发起任务的会话；AI 正忙时会在处理过程中或本轮结束后收到通知。停止当前 AI 回复时，待送的完成通知会保留并在本轮收尾后补送。完成通知通过独立通知通道送达，不进入用户消息队列。</li></ul><h2 id="输入与复制">输入与复制 </h2><p>点击终端区域获得焦点，即可直接输入。长按可以选择并复制输出内容。</p><h2 id="辅助按键栏">辅助按键栏 </h2><p>手机键盘没有 Esc、Ctrl 和方向键，所以终端底部提供了一条可横向滑动的辅助按键栏：</p><ul><li><strong>控制键</strong>：<code>ESC</code>、<code>TAB</code>、<code>CTRL</code>、<code>ALT</code>。Ctrl 和 Alt 按下后会高亮，再按字母键即组成组合键。</li><li><strong>方向键</strong>：上下左右，长按可以连续发送，用来快速移动光标。</li><li><strong>常用组合</strong>：<code>C-c</code> 中断当前命令、<code>C-d</code> 发送 EOF 或退出、<code>C-z</code> 挂起进程、<code>C-l</code> 清屏。</li><li><strong>常用符号</strong>：<code>|</code>、<code>~</code>、<code>/</code>、<code>-</code>、<code>_</code>、<code>&gt;</code>、<code>:</code>、<code>$</code>、<code>&quot;</code>、<code>&#39;</code> 等，免去切换符号键盘。</li></ul><h2 id="外观设置">外观设置 </h2><p>点终端页右上角的齿轮图标（或者从「设置 → 通用设置 → 终端设置」进入）可以调整：</p><ul><li><strong>配色主题</strong>：默认「跟随应用」（自动匹配当前应用主题的深浅模式与背景色调），同时内置 GitHub Light 明亮主题与 Termius Dark、Dracula、One Dark、Monokai、GitHub Dark 五套经典暗色配色，选中立即生效，所有已打开的标签一起变。</li><li><strong>字体大小</strong>：5 到 22 之间无级调节，面板顶部有实时预览；也可以直接在终端区域双指捏合缩放，和这里的取值是同一个。</li><li><strong>字体</strong>（<strong>1.11.0 起</strong>）：默认是 JetBrains Mono（无连字版本），<code>0</code> 和 <code>O</code>、<code>1</code> 和 <code>l</code> 区分得很清楚。也可以切换成系统等宽字体，或点「导入」从手机里选一个 <code>ttf</code> / <code>otf</code> / <code>ttc</code> 字体文件；导入的字体会出现在列表里，点字体标签上的 × 可以删除，删掉正在用的会自动回落到系统等宽。中文字符始终由系统字体补齐。字体只影响终端，不改变 AI 对话区。</li><li><strong>光标样式</strong>：方块、下划线、竖线三种。</li></ul></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

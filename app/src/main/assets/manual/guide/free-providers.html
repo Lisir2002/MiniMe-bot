@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>免费供应商 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/free-providers.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="免费供应商">免费供应商 </h1><p>希望低成本体验 AI 编程？下列平台提供免费额度或活动 token，注册后即可在 Mini-AIBOT 中接入使用。免费额度通常有时效，用完或过期后需要充值，具体以各平台规则为准。</p><h2 id="mimo-开放平台-小米">MiMo 开放平台（小米） </h2><ul><li><strong>平台</strong>：小米 MiMo 开放平台</li><li><strong>注册地址</strong>：<a href="https://platform.xiaomimimo.com?ref=66QSUD" target="_blank" rel="noreferrer">platform.xiaomimimo.com</a>（邀请码 <code>66QSUD</code>）</li><li><strong>说明</strong>：小米自研 MiMo 系列模型（MiMo V2.5 等），注册后可申请 API Key 接入。</li></ul><div class="tip custom-block"><p class="custom-block-title">新人福利</p><p>通过上方邀请链接注册送 10 元体验金，享首单 9 折；体验金 40 天有效。</p></div><h2 id="日日新">日日新 </h2><ul><li><strong>平台</strong>：日日新大模型开放平台（商汤 SenseNova）</li><li><strong>注册地址</strong>：<a href="https://platform.sensenova.cn/login" target="_blank" rel="noreferrer">platform.sensenova.cn</a></li><li><strong>说明</strong>：商汤科技旗下的大模型平台，注册登录后可申请 API Key。</li></ul><div class="tip custom-block"><p class="custom-block-title">公测免费</p><p>目前处于公测阶段，token plan 免费。</p></div><h2 id="基元律动-opensquilla">基元律动（OpenSquilla） </h2><ul><li><strong>平台</strong>：基元律动 TokenRhythm</li><li><strong>官网地址</strong>：<a href="https://tokenrhythm.studio/" target="_blank" rel="noreferrer">tokenrhythm.studio</a></li><li><strong>说明</strong>：多模型统一 API 接入平台，配套 OpenSquilla 智能路由，注册后可申请 API Key 接入。</li></ul><div class="tip custom-block"><p class="custom-block-title">新人福利</p><p>需先完成实名认证，认证通过后可获得 18 元体验金。</p></div><h2 id="硅基流动-siliconflow">硅基流动（SiliconFlow） </h2><ul><li><strong>平台</strong>：硅基流动（SiliconFlow）开放平台</li><li><strong>活动地址</strong>：<a href="https://cloud.siliconflow.cn/i/HNDIQWXd" target="_blank" rel="noreferrer">https://cloud.siliconflow.cn/i/HNDIQWXd</a></li><li><strong>说明</strong>：通过邀请链接注册并完成实名认证可获取免费额度，活动截止到年底，具体以平台公告为准。</li></ul><div class="tip custom-block"><p class="custom-block-title">实名认证</p><p>新用户需先注册并完成实名认证，方可获得赠送额度。</p></div><h2 id="agnes-ai">Agnes AI </h2><ul><li><strong>平台</strong>：Agnes AI（新加坡 Sapiens AI 团队）</li><li><strong>注册地址</strong>：<a href="https://platform.agnes-ai.com/" target="_blank" rel="noreferrer">platform.agnes-ai.com</a></li><li><strong>说明</strong>：全模态 AI 平台，文本、图像、视频三大模型 API 无限期免费开放，OpenAI 兼容接口，注册后即可申请 API Key 接入。</li></ul><div class="tip custom-block"><p class="custom-block-title">全模态免费</p><p>文本、图像、视频模型 API 均免费开放，免费访问有基础速率限制与公平使用配额，具体以平台规则为准。</p></div><h2 id="在-minibot-中接入">在 Mini-AIBOT 中接入 </h2><p>拿到平台的 API Key 和 Base URL 后，按 <a href="providers.html">AI 供应商与模型</a> 的步骤配置即可：</p><ol><li>打开「设置 → AI 供应商」，点右上角 + 新建。</li><li>填入上游格式、API Key、Base URL（地址不要带 <code>/v1</code>）。</li><li>切到「模型」标签页拉取模型，回到主页即可开始对话。</li></ol><p>如果平台对上游格式、Base URL 有特殊要求（例如提供 OpenAI 兼容或 Anthropic 兼容端点），以平台文档为准。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

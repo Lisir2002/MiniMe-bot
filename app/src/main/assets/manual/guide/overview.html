@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>功能总览 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/overview.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="功能总览">功能总览 </h1><p>本页作为使用手册的快速导览索引，整理了主界面核心工作流与设置页各功能入口对应的文档。如需直接观看操作演示，可先浏览<a href="video-tutorials.html">视频教程</a>。</p><div class="tip custom-block"><p class="custom-block-title">版本说明</p><p>标了版本的条目（如「1.11.0 起」）表示该功能自该版本起引入。</p></div><h2 id="核心工作流与主界面">核心工作流与主界面 </h2><table tabindex="0"><thead><tr><th>功能</th><th>说明</th></tr></thead><tbody><tr><td>聊天交互与工作区</td><td>标题栏、侧边栏、工具栏、消息队列、工作区切换 → <a href="chat.html">文档</a></td></tr><tr><td>运行模式（三种模式）</td><td>Build / Plan / Auto 的权限控制与场景 → <a href="modes.html">文档</a></td></tr><tr><td>会话目标（Goal）</td><td><code>/goal</code> 设定目标，AI 自主循环推进至达成或预算耗尽（1.13.0 起）→ <a href="goal.html">文档</a></td></tr><tr><td>检查点与撤销</td><td>AI 修改前自动快照，支持一键安全回滚 → <a href="checkpoint.html">文档</a></td></tr><tr><td>终端交互</td><td>多标签会话、辅助按键栏、配色与字体设置 → <a href="terminal.html">文档</a></td></tr><tr><td>内置浏览器</td><td>WebView 浏览器，支持 AI 自动化操作网页（导航、点击、填表、截图等）（1.12.0 起）→ <a href="browser.html">文档</a></td></tr><tr><td>文件浏览与代码编辑</td><td>缩进树形目录、语法高亮、内置代码编辑器（1.11.0 起），以及工作区文件在手机上的位置与访问 → <a href="files.html">文档</a></td></tr><tr><td>Git 版本管理</td><td>可视化状态管理、分支切换、提交历史、回退与删除（1.11.0 起）→ <a href="git.html">文档</a></td></tr><tr><td>平板与大屏适配</td><td>响应式分栏、常驻侧边栏、并排双栏工作台（1.11.0 起）→ <a href="tablet.html">文档</a></td></tr></tbody></table><h2 id="设置项与扩展能力速查">设置项与扩展能力速查 </h2><h3 id="通用设置">通用设置 </h3><table tabindex="0"><thead><tr><th>入口</th><th>说明</th></tr></thead><tbody><tr><td>偏好设置</td><td>全局偏好：无效模型清理、启动时会话、回车发送、首字与间隔超时、重试次数、自动压缩阈值、sendFile 单文件上限（1.12.0 起）→ <a href="general.html">文档</a></td></tr><tr><td>外观主题、背景图、语言</td><td>主题明暗、预设配色、莫奈取色、背景图与多语言 → <a href="appearance.html">文档</a></td></tr><tr><td>终端设置</td><td>终端配色、字体大小与光标样式 → <a href="terminal.html">文档</a></td></tr></tbody></table><h3 id="ai-配置与扩展">AI 配置与扩展 </h3><table tabindex="0"><thead><tr><th>入口</th><th>说明</th></tr></thead><tbody><tr><td>AI 供应商</td><td>接入模型服务、管理模型列表、多 Key（1.11.0 起）、思考强度 → <a href="providers.html">文档</a></td></tr><tr><td>模型思考模式</td><td>各模型真实支持的思考档位、能否关闭思考、怎么判断是否生效 → <a href="../advanced/reasoning-modes.html">文档</a></td></tr><tr><td>默认与专用模型</td><td>新会话默认模型，以及识图、生图、标题总结的专用模型 → <a href="default-models.html">文档</a></td></tr><tr><td>MCP 服务器</td><td>接入外部工具，全局与项目两级配置 → <a href="mcp.html">文档</a></td></tr><tr><td>技能</td><td>按需加载的专项能力扩展包 → <a href="skills.html">文档</a></td></tr><tr><td>子代理</td><td>派生独立会话并行执行任务，可在设置内新建、编辑与启停，支持自定义模型与工具集（1.11.0 起）→ <a href="subagent.html">文档</a></td></tr><tr><td>Shizuku 工具</td><td>AI 的 <code>Shizuku</code> 工具：用 Shizuku 执行系统命令（1.12.0 起）→ <a href="shizuku.html">文档</a></td></tr><tr><td>自定义提示词</td><td>覆盖与定制 AI 系统的提示词片段 → <a href="custom-prompts.html">文档</a></td></tr><tr><td>记忆与项目规则</td><td>跨会话长期记忆，以及 AGENTS.md / CLAUDE.md 项目规则 → <a href="memory.html">文档</a></td></tr></tbody></table><h3 id="运行环境">运行环境 </h3><table tabindex="0"><thead><tr><th>入口</th><th>说明</th></tr></thead><tbody><tr><td>容器与镜像</td><td>本地 Linux 容器、自定义镜像、挂载手机目录、远程 SSH 后端 → <a href="container.html">文档</a></td></tr><tr><td>网络代理</td><td>全局代理与供应商级代理（1.11.0 起）→ <a href="proxy.html">文档</a></td></tr><tr><td>连接与同步</td><td>SFTP / FTP 通道、工作区同步、内置 FTP 服务端 → <a href="sync.html">文档</a></td></tr></tbody></table><h3 id="权限与后台">权限与后台 </h3><table tabindex="0"><thead><tr><th>入口</th><th>说明</th></tr></thead><tbody><tr><td>工具授权</td><td>AI 调用工具的授权规则 → <a href="permissions.html">文档</a></td></tr><tr><td>软件权限</td><td>安装未知应用、存储、电池优化、自启动、Shizuku 等系统权限 → <a href="app-permissions.html">文档</a></td></tr><tr><td>后台运行</td><td>后台保活、屏幕常亮、AI 完成通知、实时通知、授权审批通知 → <a href="background-run.html">文档</a></td></tr></tbody></table><h3 id="数据与诊断">数据与诊断 </h3><table tabindex="0"><thead><tr><th>入口</th><th>说明</th></tr></thead><tbody><tr><td>Token 统计</td><td>用量、费用估算、调用明细 → <a href="token-stats.html">文档</a></td></tr><tr><td>存储空间</td><td>按类别看聊天、容器、工作区等占用，并清理临时数据（1.12.0 起）→ <a href="storage.html">文档</a></td></tr><tr><td>备份与还原</td><td>加密导出导入配置与工作区 → <a href="backup.html">文档</a></td></tr><tr><td>日志</td><td>查看运行日志、崩溃报告 → <a href="logs.html">文档</a></td></tr><tr><td>常见错误提示</td><td>重试气泡分类含义、常见 HTTP 错误码与排查 → <a href="error-codes.html">文档</a></td></tr></tbody></table><h3 id="帮助与关于">帮助与关于 </h3><table tabindex="0"><thead><tr><th>入口</th><th>说明</th></tr></thead><tbody><tr><td>关于</td><td>版本信息、检查更新与首次启动确认流程 → <a href="about.html">文档</a></td></tr><tr><td>用户协议</td><td>使用规则、AI 与操作风险、第三方费用及开源权利 → <a href="../terms.html">文档</a></td></tr><tr><td>隐私政策</td><td>数据保存、联网传输、日志、备份与删除 → <a href="../privacy.html">文档</a></td></tr></tbody></table><h2 id="进阶教程">进阶教程 </h2><table tabindex="0"><thead><tr><th>主题</th><th>说明</th></tr></thead><tbody><tr><td>在容器中编译 Android 应用</td><td>搭 JDK 与 Android SDK，从源码出 APK → <a href="../advanced/build-android-app.html">文档</a></td></tr><tr><td>在容器中编译 Flutter 应用</td><td>装 JDK、Android SDK 与 Flutter SDK，构建 Flutter debug APK → <a href="../advanced/build-flutter-app.html">文档</a></td></tr><tr><td>在容器中构建 Flutter release APK</td><td>用 qemu 转译补齐 AOT 编译器，本地构建 Flutter release 包 → <a href="../advanced/build-flutter-release.html">文档</a></td></tr><tr><td>安装 Playwright 浏览器自动化</td><td>容器内装 Chromium 并接入 Playwright MCP，让 AI 操作网页 → <a href="../advanced/playwright-mcp.html">文档</a></td></tr><tr><td>用 adb 无线调试其他设备</td><td>在容器里用 adb 连接另一台手机或本机，安装应用、抓日志、截屏 → <a href="../advanced/adb-wireless-debug.html">文档</a></td></tr><tr><td>自定义面板</td><td>用脚本在输入框上方画余额或用量卡片 → <a href="../advanced/dashboard-cards.html">文档</a></td></tr></tbody></table></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

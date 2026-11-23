@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>会话管理 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/session-management.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><h1 id="会话管理">会话管理</h1>
+<p>入口在「设置 → 数据与诊断 → 会话管理」。由于聊天界面和终端在工作期间强绑定单一工作区，跨工作区的全盘整理统一放在这里进行。</p>
+<h2 id="查看本地与远程会话">查看本地与远程会话</h2>
+<p>所有聊天会话与消息记录都保存在手机本地数据库中，即使当前处于本地模式（或尚未连接远程 SSH 服务器），你依然可以在这里看到：</p>
+<ul>
+<li><strong>当前环境工作区</strong>：当前执行后端下的可用工作区（本机内部工作区、外部本地目录，或已连接的远程 SSH 工作区）。</li>
+<li><strong>远程 / 离线历史工作区</strong>：曾经使用过的远程服务器路径、切换模式前的本地工作区，或已移除的外部目录。</li>
+</ul>
+<p>顶部支持按「全部 / 当前环境 / 远程/离线」筛选，也支持输入关键词跨所有工作区搜索会话标题、工作区路径和历史消息内容。</p>
+<h2 id="阅读会话内容与切换打开">阅读会话内容与切换打开</h2>
+<ul>
+<li><strong>点击任意会话</strong>可进入详情页，完整查看用户消息、AI 回复、可展开的思考过程以及工具调用记录（即使对应远程工作区当前离线也可只读查看与复制），并支持重命名、导出或删除。</li>
+<li>如果该会话属于<strong>当前环境可用工作区</strong>，可点击「在聊天中打开」，直接切到该工作区并继续对话。</li>
+</ul>
+<h2 id="跨工作区移动与批量整理">跨工作区移动与批量整理</h2>
+<p>你可以通过以下方式调整会话所属的工作区：</p>
+<ul>
+<li><strong>批量修改</strong>：点击右上角多选按钮（或长按会话选择「批量选择」），勾选一个或多个会话后点击底部「移动」选择目标工作区，也可点击「批量删除」一次清理多个会话。</li>
+<li><strong>单条操作</strong>：长按任意会话打开操作菜单，可选择「移动到工作区」、置顶、重命名、导出或删除；进入会话详情页后也可直接移动所属工作区。</li>
+</ul>
+<div class="custom-block tip"><p class="custom-block-title">说明</p><ul>
+<li>正在运行或尚有排队待发消息的会话需先停止后才能移动或删除。</li>
+<li>若移动的是当前正在查看的会话且目标属于当前可用工作区，应用会自动跟随切换到目标工作区。</li>
+<li>跨环境移动（如将本地会话移至离线远程路径）前会弹出确认提示，仅变更本地记录中的工作区归属，不会搬运磁盘文件。</li>
+</ul></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

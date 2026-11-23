@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shizuku 工具 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/shizuku.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="shizuku-工具">Shizuku 工具 </h1><p>Shizuku 让普通应用可以执行系统命令。Mini-AIBOT 接入后，AI 获得一个名为 <code>Shizuku</code> 的工具，可通过它在手机系统上运行 <code>pm</code>、<code>am</code>、<code>cmd</code> 等命令，弥补本地容器（PRoot）拿不到系统权限的短板。</p><h2 id="前置-安装并启动-shizuku">前置：安装并启动 Shizuku </h2><ol><li>从 <a href="https://shizuku.rikka.app/download/" target="_blank" rel="noreferrer">Shizuku 官网</a> 或应用商店安装 Shizuku。</li><li>打开 Shizuku，按应用内指引启动服务： <ul><li>Android 11 及以上：开启「无线调试」后可直接在手机上启动；</li><li>Android 10 及以下：需连接电脑用 adb 启动。</li></ul></li></ol><h2 id="在-minibot-中授权">在 Mini-AIBOT 中授权 </h2><p>打开「设置 → 软件权限 → Shizuku」，页面显示当前状态：</p><ul><li><strong>未安装</strong>：点击前往下载安装。</li><li><strong>服务未运行</strong>：点击打开 Shizuku 并启动服务。</li><li><strong>未授权</strong>：点击申请授权，Shizuku 弹出授权框，选择「允许」。</li><li><strong>已就绪</strong>：授权完成，AI 即可使用 <code>Shizuku</code> 工具。</li></ul><p>从 Shizuku 应用返回 Mini-AIBOT 时，状态会自动刷新。</p><h2 id="使用与安全">使用与安全 </h2><p><code>Shizuku</code> 直接操作宿主 Android 系统，权限高危，因此在工具授权上按<strong>高危工具</strong>处理：</p><ul><li><strong>每次调用都会弹出授权确认</strong>：包括 <code>ls</code> 这类只读命令，不走内置安全白名单，也不会因已有规则自动放行。</li><li><strong>不支持「始终允许」</strong>：弹窗中的「始终允许」按钮不可用（会显示原因），只能单次放行，不生成记忆规则。</li><li><strong>AUTO（自动）模式下同样弹窗</strong>：AUTO 的「全放行」对它不生效；仅当开启「设置 → 工具授权 → 禁用安全拦截」后，AUTO 下才恢复自动放行（BUILD 模式仍逐次确认、不可记忆）。</li><li><strong>PLAN（计划）模式</strong>下，该工具与其他写操作一样被拦截。</li><li>项目权限规则中的<strong>禁止规则</strong>对它依然生效（命中 <code>deny</code> 会被直接拒绝）。</li></ul><h2 id="常见问题">常见问题 </h2><p><strong>命令报「Shizuku 未就绪」</strong></p><p>按设置页提示依次确认：已安装 → 服务已启动 → 已授权。设备重启后 Shizuku 服务通常需要重新启动（Android 11+ 可在 Shizuku 内重新开启无线调试启动）。</p><p><strong><code>Shizuku</code> 工具执行失败但没有明显报错</strong></p><p>部分命令需要特定系统权限，<code>Shizuku</code> 并不具备所有权限。可在终端中用 <code>Bash</code> 对比，确认是命令本身还是权限问题。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Quick Start · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../../assets/manual.css">
+</head>
+<body data-root="../../" data-page="en/guide/quick-start.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="Open contents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../../index.html"><img src="../../logo.png" alt=""><span>Manual</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../../index.html">Home</a>
+    <button class="top-action" id="search-open" type="button">Search</button>
+    <button class="top-action close" id="manual-close" type="button">Exit</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">Contents</span>
+      <button class="icon-btn" id="drawer-close" aria-label="Close contents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="Search the manual" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="quick-start">Quick Start </h1><p>From installation to your first AI conversation.</p><h2 id="system-requirements">System Requirements </h2><ul><li>Android 8.0 (API 26) or higher</li><li>arm64-v8a or x86_64 device</li></ul><h2 id="download-install">Download &amp; Install </h2><p>Download from <a href="https://github.com/jieapi/aicode/releases/latest" target="_blank" rel="noreferrer">GitHub Releases</a>. Pick the package that fits your device:</p><table tabindex="0"><thead><tr><th>Package</th><th>Best for</th></tr></thead><tbody><tr><td><code>armsolo</code></td><td>Real devices (arm64), smallest size</td></tr><tr><td><code>x86solo</code></td><td>Emulators and Chromebooks (x86_64)</td></tr><tr><td><code>universal</code></td><td>Both architectures in one package, larger size</td></tr></tbody></table><div class="warning custom-block"><p class="custom-block-title">Pick the right architecture</p><p>A mismatched architecture will break the built-in container. If you are not sure, use <code>universal</code>.</p></div><p>Tip: you can also tap &quot;Download APK&quot; on the <a href="../../index.html">homepage</a>, which fetches the latest stable <code>universal</code> package through an accelerated mirror (falls back to the GitHub link automatically if the mirror is unavailable).</p><h2 id="_1-first-launch-onboarding-guide">1. First Launch &amp; Onboarding Guide </h2><p>Open Mini-AIBOT and you will land on the chat home with a fresh empty conversation. Grant storage permission on first use — otherwise the AI cannot access files on your phone.</p><p>On first launch, the app automatically starts an interactive spotlight onboarding guide, walking you through the complete flow: &quot;Open sidebar → Enter Settings to configure a vendor and fetch models → Return home to select model → Send first message&quot;. In each step, you can tap the highlighted target or the &quot;Next&quot; button on the card to proceed, or tap &quot;Skip&quot; at any time. If you want to review the walkthrough later, you can restart it anytime via &quot;Settings → Re-run onboarding&quot;.</p><h2 id="_2-configure-an-ai-vendor">2. Configure an AI Vendor </h2><p>Mini-AIBOT does not provide models itself; you need to connect a model service first.</p><ol><li>Tap the menu button at the top-left of the home page to open the sidebar, then tap &quot;Settings&quot; at the bottom.</li><li>Go to &quot;AI Config → AI Vendors&quot; and tap the + at the top-right to create one.</li><li>Fill in four fields: <ul><li><strong>Name</strong>: an alias, e.g. &quot;OpenAI Official&quot;.</li><li><strong>Upstream Format</strong>: pick one of <code>OpenAI</code> / <code>Anthropic</code> / <code>Gemini</code>. Third-party relay services usually use <code>OpenAI</code>.</li><li><strong>API Key</strong>: your key, like <code>sk-xxx</code>.</li><li><strong>Base URL</strong>: the API root. The official URL is pre-filled once you pick an upstream format; when using a third-party relay, clear the default and enter the relay&#39;s address. Note: <strong>do not include <code>/v1</code> or anything after it</strong>.</li></ul></li></ol><p>The entry saves automatically — no manual save button.</p><h2 id="_3-add-models">3. Add Models </h2><ol><li>Tap the vendor you just created to open its edit page, then switch to the &quot;Models&quot; tab at the bottom.</li><li>Two ways to add models: <ul><li>Tap &quot;Fetch Models&quot; to sync the available list from the server and check the ones you want.</li><li>Tap + at the top-right to type a model name manually (e.g. <code>gpt-4o</code>). Use this when a relay doesn&#39;t return the full model list.</li></ul></li><li>Optional: tap a model row to edit its metadata (context window, pricing, and capability toggles like image input and tool calls).</li></ol><p>Models save automatically after being added.</p><h2 id="_4-select-a-model">4. Select a Model </h2><p>Back on the chat home, tap the model button in the toolbar above the input box and pick the model you just added. The search box at the top filters models, and models are grouped by vendor.</p><h2 id="_5-prepare-the-execution-environment">5. Prepare the Execution Environment </h2><p>Go to &quot;Settings → Runtime → Container &amp; Images&quot;. Two choices:</p><ul><li><strong>Local container</strong> (default): uses the built-in Alpine Linux, nothing to configure.</li><li><strong>Remote SSH</strong>: use a remote server as the execution backend (see Remote SSH mode in the full documentation).</li></ul><div class="tip custom-block"><p class="custom-block-title">Open the terminal once first</p><p>The first-time container preparation (extracting the system, installing base tools) only triggers when you enter the <strong>terminal page</strong>. So go to the terminal from the title bar once, complete the initialization menu when prompted, and only then can the AI execute commands reliably.</p></div><h2 id="_6-start-a-conversation">6. Start a Conversation </h2><p>Type in the input box and hit send. The mode button on the left of the input box switches between BUILD, PLAN and AUTO — see the full documentation on the three modes for the differences.</p><h2 id="useful-tips">Useful Tips </h2><ul><li>The model selected in an empty conversation on the home page becomes the default for new conversations.</li><li>Image recognition, image generation and title summarization can each have a dedicated model (see Default &amp; Dedicated Models in the full documentation).</li><li>The AI records a snapshot before modifying code, so you can roll back safely with one tap (see Checkpoints &amp; Undo in the full documentation).</li><li>Before long-running tasks like compilation, enable background keep-alive in the system permissions to prevent the system from killing the process when switching away.</li></ul></div></article>
+    <footer class="page-foot">Bundled offline manual · Based on upstream AiCode docs · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../../assets/nav-data.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>页面样式、组件与事件 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../../assets/manual.css">
+</head>
+<body data-root="../../" data-page="advanced/plugin/ui-components.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../../index.html"><img src="../../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><h1 id="页面样式组件与事件">页面样式、组件与事件</h1>
+<p>插件页面可使用宿主主题、Vue 组件库和文件订阅，使界面与 App 保持一致，并在数据变化时刷新。</p>
+<h2 id="主题">主题</h2>
+<p>在页面 HTML 壳中引用主题和组件样式；Vue 与桥脚本的统一引入方式见<a href="source-build.html#html-壳">页面构建</a>：</p>
+<pre><code class="language-html">&lt;link rel=&quot;stylesheet&quot; href=&quot;/__minibot/theme.css&quot;&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;/__minibot/ui.css&quot;&gt;
+</code></pre>
+<p>可用 CSS 变量：</p>
+<table>
+<thead>
+<tr>
+<th>变量</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--minibot-bg</code></td>
+<td>页面背景</td>
+</tr>
+<tr>
+<td><code>--minibot-surface</code></td>
+<td>卡片、输入框表面</td>
+</tr>
+<tr>
+<td><code>--minibot-on-surface</code></td>
+<td>正文文字</td>
+</tr>
+<tr>
+<td><code>--minibot-primary</code></td>
+<td>主色</td>
+</tr>
+<tr>
+<td><code>--minibot-error</code></td>
+<td>错误色</td>
+</tr>
+<tr>
+<td><code>--minibot-success</code></td>
+<td>成功色</td>
+</tr>
+<tr>
+<td><code>--minibot-warning</code></td>
+<td>警告色</td>
+</tr>
+<tr>
+<td><code>--minibot-radius-*</code></td>
+<td>圆角</td>
+</tr>
+<tr>
+<td><code>--minibot-space-*</code></td>
+<td>间距</td>
+</tr>
+<tr>
+<td><code>--minibot-font-scale</code></td>
+<td>字号缩放</td>
+</tr>
+</tbody>
+</table>
+<p>深浅色切换时，宿主直接更新变量，页面不会重新加载；请依赖 CSS 变量，不要在脚本中缓存具体颜色值。<code>minibot.applyTheme(variables)</code> 可临时覆盖变量，并派发 <code>minibot:theme</code> 事件。</p>
+<h3 id="布局">布局</h3>
+<p>内容区需要居中并限制最大宽度时，应同时设置 <code>box-sizing: border-box; width: 100%; max-width: 860px; margin: 0 auto;</code>，使其从首次显示起即占满可用宽度。若仅设置最大宽度和自动外边距，在纵向 Flex 布局中会按内容收窄，待异步数据返回后才撑开。</p>
+<pre><code class="language-css">.page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 16px;
+}
+</code></pre>
+<h2 id="vue-组件库">Vue 组件库</h2>
+<p>按 <a href="source-build.html#vue-入口">Vue 入口</a>注册 <code>MiniBotUI</code> 后，在单文件组件中使用 <code>minibot-*</code>：</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;minibot-field label=&quot;描述&quot;&gt;
+    &lt;minibot-textarea v-model=&quot;description&quot; placeholder=&quot;输入描述&quot; /&gt;
+  &lt;/minibot-field&gt;
+&lt;/template&gt;
+
+&lt;script setup lang=&quot;ts&quot;&gt;
+import { ref } from 'vue';
+
+const description = ref('');
+&lt;/script&gt;
+</code></pre>
+<p>组件名与 props 的类型提示见<a href="source-build.html#页面类型提示">页面类型提示</a>。</p>
+<h3 id="输入框">输入框</h3>
+<p><code>minibot-input</code>、<code>minibot-textarea</code> 的外观与 App 输入框一致，包括圆角、描边、文字间距、深浅色、聚焦和禁用状态。</p>
+<ul>
+<li>每个 <code>minibot-field</code> 放置一个输入组件；</li>
+<li>空值且未聚焦时，标签显示在框内；聚焦或有内容时标签浮到边框处，提示文字在标签浮起后显示；</li>
+<li>点击标签也可聚焦输入框；</li>
+<li><code>disabled</code> 时底色保持不变，文字与边框变淡；</li>
+<li><code>type="password"</code> 时默认隐藏内容，右侧自动显示明文/隐藏切换按钮；切换仅改变显示方式，保留原内容和光标位置；禁用时切换按钮同样禁用。</li>
+</ul>
+<h3 id="对话框">对话框</h3>
+<p><code>minibot-dialog</code> 对齐 App 的居中对话框：标题、内容和底部文字按钮分区排列，取消在左、确认在右。</p>
+<p>文字确认：</p>
+<pre><code class="language-html">&lt;minibot-dialog v-model=&quot;confirmOpen&quot; title=&quot;确认操作&quot;
+  message=&quot;确定继续执行吗？&quot; @confirm=&quot;runAction&quot;&gt;&lt;/minibot-dialog&gt;
+</code></pre>
+<p>输入表单：</p>
+<pre><code class="language-html">&lt;minibot-dialog v-model=&quot;editOpen&quot; title=&quot;修改名称&quot; confirm-text=&quot;保存&quot;
+  :confirm-disabled=&quot;!name.trim()&quot; @confirm=&quot;saveName&quot;&gt;
+  &lt;minibot-field label=&quot;名称&quot;&gt;
+    &lt;minibot-input v-model=&quot;name&quot; placeholder=&quot;输入名称&quot;&gt;&lt;/minibot-input&gt;
+  &lt;/minibot-field&gt;
+&lt;/minibot-dialog&gt;
+</code></pre>
+<ul>
+<li>文字确认通过 <code>message</code> 显示说明；</li>
+<li>输入弹窗将输入组件放入默认插槽，输入框底色透出弹窗颜色；</li>
+<li>内容过长时仅滚动内容区，底部按钮保持可见；</li>
+<li><code>confirm-disabled</code> 为 <code>true</code> 时不可确认；</li>
+<li>确认将触发 <code>confirm</code> 并关闭；取消按钮、遮罩、返回键或 Escape 将触发 <code>cancel</code> 并关闭；</li>
+<li>输入值由页面的 <code>v-model</code> 管理，取消时是否恢复原值由页面决定。</li>
+</ul>
+<p><code>minibot-bottom-sheet</code> 用于底部弹窗内容，窄屏从底部展开，宽屏居中。简单输入和文字确认应直接使用 <code>minibot-dialog</code>。</p>
+<h3 id="自定义全屏弹层">自定义全屏弹层</h3>
+<p>页面自行绘制的全屏弹层，应在打开和关闭时成对调用 <code>minibot.ui.setOverlay</code>，由宿主在全局背景图上按矩形挖孔：</p>
+<pre><code class="language-js">const rect = element.getBoundingClientRect();
+await minibot.ui.setOverlay(true, {
+  left: rect.left,
+  top: rect.top,
+  width: rect.width,
+  height: rect.height,
+  topRadius: 16,
+  bottomRadius: 16,
+  coversBottom: false
+});
+
+// 关闭时
+await minibot.ui.setOverlay(false);
+</code></pre>
+<p><code>MiniBotBottomSheet</code>、<code>MiniBotDialog</code> 打开时会自动上报弹层矩形并调用 <code>setOverlay(true, rect)</code>，关闭后恢复。页面自行绘制的弹层不应依赖这两个组件的行为。</p>
+<h2 id="插件事件">插件事件</h2>
+<p>插件进程用 SDK 主动推送事件：</p>
+<pre><code class="language-ts">import { emit } from '@jieapi/plugin-sdk';
+
+emit('records.changed', {count: 4});
+</code></pre>
+<p>页面侧：</p>
+<pre><code class="language-js">const off = minibot.events.on((event) =&gt; {
+  if (event.name === 'records.changed') {
+    console.log(event.payload);
+    refreshRecords();
+  }
+});
+</code></pre>
+<ul>
+<li>事件仅发送给同一插件、当前已加载的页面；</li>
+<li>无页面时丢弃，不排队；</li>
+<li>不跨插件转发，也不会注入会话或触发新的 AI 推理；</li>
+<li>页面关闭或宿主销毁时应调用 <code>off()</code>。</li>
+</ul>
+<p>适用于事件推送的场景：进程后台任务完成、定时器状态、浮层交互结果。</p>
+<h2 id="文件订阅">文件订阅</h2>
+<p>所有插件 HTML 页面均可订阅其读取的文件来源，无需增加运行时或声明 hook。订阅仅通知「数据可能发生变化」，由页面决定重读哪些内容；宿主不会重载 WebView。</p>
+<pre><code class="language-js">const stopWatching = await minibot.fs.watch('data://records', {recursive: false}, (change) =&gt; {
+  if (change.error) {
+    console.error(change.error.code, change.error.message);
+    return;
+  }
+  refreshRecords();
+});
+
+const stopLifecycle = minibot.events.on((event) =&gt; {
+  if (event.name === 'ui.lifecycle' &amp;&amp; event.payload.visible) {
+    refreshRecords();
+  }
+});
+
+await refreshRecords();
+
+// 页面应用卸载时应清理；暂时退出页面时由宿主自动暂停监听。
+await stopWatching();
+stopLifecycle();
+</code></pre>
+<p>规则：</p>
+<ul>
+<li><code>watch(path, options?, handler)</code> 返回 Promise，解析为取消订阅函数；取消函数返回 Promise，可重复调用；</li>
+<li>也支持 <code>watch(path, handler)</code>；</li>
+<li>路径是当前执行环境的真实绝对路径，<code>data://</code> 映射到插件自己的数据目录；本地模式为容器内路径，SSH 模式为远端路径；</li>
+<li><code>recursive</code> 默认为 <code>false</code>；未创建的路径按目录等待；如需监听尚未创建的文件，应订阅其父目录；</li>
+<li>回调收到 <code>{subscriptionId, path, contextKey, changes: [{path, kind}], truncated}</code>，<code>kind</code> 为 <code>created</code>、<code>modified</code> 或 <code>deleted</code>；</li>
+<li>路径始终按插件传入时的形式回传，不包含宿主私有目录；</li>
+<li>首次远端扫描成功时也会收到一次 <code>changes: []</code> 的校准通知，不应仅在明细非空时刷新；</li>
+<li><code>truncated</code> 为 <code>true</code> 时应重新读取整个订阅范围；<code>error</code> 存在时表示订阅出现错误，不应据此清空已有数据；</li>
+<li>本地复用文件系统通知，默认约 300ms 合并一批，另有约 2 秒的文件快照检查兜底；</li>
+<li>SSH 的工作区和配置目录使用约 2 秒的按需远端快照检查；同一远端工作区内的多个订阅共享工作区根的一次轮询，再按各自子路径过滤事件，以修改时间和大小判断变化；同一时间精度内、大小也相同的连续改写可能无法区分，重新显示页面时应再次校准；</li>
+<li>页面可见时监听，离开页面或 App 退到后台时暂停，回到页面时恢复；工作区、执行模式或 SSH 服务器变化时重建；</li>
+<li>每个页面最多 16 个订阅，应选择必要的小范围，避免递归监听整个工作区；</li>
+<li>文件订阅同样受范围限制：不能递归订阅整个文件系统、home 或 <code>~/.minibot</code> 根，避免一次扫描整棵树。</li>
+</ul>
+<p>文件订阅仅覆盖指定文件来源，不会自动推断数据库、HTTP API 或其他插件数据的变化。这类数据仍由插件进程通过 <code>plugin.event</code> 主动推送，或在页面显示时自行校准。</p>
+<h2 id="页面生命周期">页面生命周期</h2>
+<p><code>ui.lifecycle</code> 的 payload 为 <code>{visible, reason, contextKey}</code>，<code>reason</code> 为：</p>
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shown</code></td>
+<td>页面首次显示</td>
+</tr>
+<tr>
+<td><code>resumed</code></td>
+<td>从后台或隐藏状态回到前台</td>
+</tr>
+<tr>
+<td><code>hidden</code></td>
+<td>页面被隐藏或 App 退到后台</td>
+</tr>
+<tr>
+<td><code>contextChanged</code></td>
+<td>工作区、执行模式或 SSH 服务器变化</td>
+</tr>
+</tbody>
+</table>
+<p>首次加载仍需主动获取数据；重新显示、回到前台和上下文切换用于校准缓存。不应仅依赖一次 Vue <code>mounted</code>。</p>
+<h2 id="运行事件">运行事件</h2>
+<p>页面启动 AI 轮次后，会额外收到宿主的 <code>chat.run.started</code> 与 <code>chat.run.finished</code> 事件：</p>
+<pre><code class="language-js">minibot.events.on((event) =&gt; {
+  if (event.name === 'chat.run.finished') {
+    console.log(event.payload.sessionId, event.payload.status, event.payload.error);
+  }
+});
+</code></pre>
+<p><code>status</code> 为 <code>running</code> / <code>success</code> / <code>error</code> / <code>cancelled</code>；这些事件只说明轮次状态，正文仍通过 <code>minibot.chat.listMessages</code> 读取。</p>
+<p><code>minibot.context()</code> 返回当前 <code>contextKey</code> 和 <code>visible</code>。文件方法可在最后一个 <code>options</code> 参数中传入 <code>{contextKey}</code>；上下文已经变化时请求返回 <code>STALE_CONTEXT</code>，用于拦截仍在排队的旧项目操作。异步刷新结果仍应在页面侧核对上下文，正在编辑的输入不得被刷新直接覆盖。</p>
+<pre><code class="language-js">let loading = false;
+
+async function refreshRecords() {
+  if (loading) return;
+  loading = true;
+  try {
+    const ctx = await minibot.context();
+    const result = await minibot.fs.read('data://records.json', {contextKey: ctx.contextKey});
+    const current = await minibot.context();
+    if (!current.visible || current.contextKey !== ctx.contextKey) return;
+    render(JSON.parse(result.content));
+  } catch (error) {
+    if (error.code === 'STALE_CONTEXT') return;
+    console.error(error.code, error.message);
+  } finally {
+    loading = false;
+  }
+}
+</code></pre>
+<p>页面桥、文件读写和安全边界统一见<a href="ui-pages.html">插件页面与宿主接口</a>。</p></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../../assets/nav-data.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

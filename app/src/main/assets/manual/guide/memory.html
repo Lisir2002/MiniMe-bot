@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>记忆与项目规则 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/memory.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="记忆与项目规则">记忆与项目规则 </h1><p>本章介绍自动记忆与项目规则两项能力，用于保持 AI 跨会话的上下文连续性与项目一致性。</p><h2 id="自动记忆">自动记忆 </h2><p>自动记忆是 AI 自行维护的长期知识库。对话中形成的项目约定、用户偏好与架构决策，AI 会自动记录并在后续会话中复用。</p><h3 id="作用域">作用域 </h3><table tabindex="0"><thead><tr><th>作用域</th><th>说明</th><th>存储位置</th></tr></thead><tbody><tr><td>全局</td><td>跨项目通用的个人偏好</td><td><code>~/.minibot/memory/</code></td></tr><tr><td>项目</td><td>当前项目专属的约定与经验</td><td>本地模式：<code>&lt;项目根&gt;/.minibot/memory/</code>；远程 SSH 模式：<code>~/.minibot/memory/projects/&lt;项目名&gt;-&lt;标识哈希&gt;/</code></td></tr></tbody></table><p>项目记忆在远程模式下存储于手机本地，并按「项目名 + 服务器标识」隔离，不受容器重置影响。</p><h3 id="记忆文件">记忆文件 </h3><p>每条记忆是一个 Markdown 文件，由 YAML frontmatter（<code>name</code>、<code>description</code>）与正文组成：</p><div class="language-markdown vp-adaptive-theme"><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold;">---</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">name: conventions</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">description: 项目代码规范与命名约定</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold;">---</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">（正文）</span></span></code></pre></div><h3 id="生效方式">生效方式 </h3><p>会话开始时，系统将全部记忆的摘要（名称与描述）注入提示词；需要详情时，AI 通过 <code>memory</code> 工具读取完整内容。</p><p>平台权限与安全边界始终适用。在这些边界内，本轮明确要求优先于长期偏好与默认约定；未明确指定时，按「用户记忆 &gt; 项目规则 &gt; 内置默认」处理冲突。</p><h3 id="memory-工具">memory 工具 </h3><table tabindex="0"><thead><tr><th>参数</th><th>说明</th></tr></thead><tbody><tr><td><code>action</code></td><td><code>read</code> / <code>save</code> / <code>edit</code> / <code>delete</code> / <code>list</code></td></tr><tr><td><code>name</code></td><td>记忆名称（即文件名）</td></tr><tr><td><code>description</code></td><td>摘要，<code>save</code> 时必填</td></tr><tr><td><code>content</code></td><td>正文（Markdown），<code>save</code> 时必填</td></tr><tr><td><code>edits</code></td><td>局部编辑列表，语义与编辑文件一致</td></tr><tr><td><code>scope</code></td><td><code>project</code>（默认）或 <code>global</code></td></tr></tbody></table><p>同名记忆项目级优先于全局。更新既有记忆时建议使用 <code>edit</code> 局部编辑；涉及踩坑经验的内容，应在验证根因后记录。</p><h2 id="项目规则">项目规则 </h2><p>项目规则有两处来源：全局目录 <code>~/.minibot</code> 与当前工作区根目录。两处各自优先读取 <code>AGENTS.md</code>，不存在时回退 <code>CLAUDE.md</code>。全局规则用于跨项目通用的约定，工作区规则用于项目专属的规则、架构约束与构建指南；两处冲突时以更具体的工作区规则为准，并遵循上述权限边界与冲突处理顺序。</p><h3 id="生效方式-1">生效方式 </h3><p>两处规则在会话开始时自动加载并一并注入提示词，无需手动配置；每份文件内容超过 32,000 字符时将被截断。</p><h3 id="自定义加载约定">自定义加载约定 </h3><p>项目规则的加载约定对应提示词片段 <code>15-project-rules.md</code>，可通过 <code>~/.minibot/prompts.custom/15-project-rules.md</code> 覆盖，见<a href="custom-prompts.html">自定义提示词</a>。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

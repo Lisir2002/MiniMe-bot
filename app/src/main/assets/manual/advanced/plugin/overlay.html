@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>系统浮层 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../../assets/manual.css">
+</head>
+<body data-root="../../" data-page="advanced/plugin/overlay.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../../index.html"><img src="../../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><h1 id="系统浮层">系统浮层</h1>
+<p>系统浮层是宿主托管的 Android 悬浮窗，页面仍为插件包内的 HTML。适用于桌宠、状态 HUD、后台审批面板等需要显示在 App 之外的组件。</p>
+<h2 id="声明">声明</h2>
+<p>使用 <code>contributes.overlay</code> 声明用途与 surface，字段、尺寸范围和数量限制见<a href="manifest.html#overlay">清单参考</a>。全局最多同时存在 8 个插件浮层窗口，窗口不可全屏，也不保证覆盖安全界面。</p>
+<h2 id="授权">授权</h2>
+<p>声明不会自动创建窗口，需同时满足以下条件：</p>
+<ol>
+<li>使用者在插件详情中单独开启该插件的浮层授权；</li>
+<li>App 已获得系统的「显示在其他应用上层」权限。</li>
+</ol>
+<p>任一条件不满足时，<code>overlay.create</code> 将返回 <code>OVERLAY_NOT_AUTHORIZED</code> 或 <code>OVERLAY_SYSTEM_PERMISSION_MISSING</code>。插件停用、卸载或撤销授权时，宿主将关闭其创建的窗口。</p>
+<h2 id="创建与更新">创建与更新</h2>
+<p>普通页面通过 <code>minibot.overlay.create({surface?, width?, height?, visibilityPolicy?})</code> 创建清单中的 surface：</p>
+<pre><code class="language-js">const overlay = await minibot.overlay.create({
+  surface: 'pet',
+  width: 120,
+  height: 120,
+  visibilityPolicy: 'always'
+});
+</code></pre>
+<p>返回 <code>OverlayInfo</code>，包含 <code>overlayId</code>、<code>pluginId</code>、尺寸、位置、拖拽、吸附与显示策略。宽高为 dp，创建结果的 <code>x</code> / <code>y</code> 为屏幕像素，不含 <code>density</code> 和 <code>foreground</code>。未指定尺寸时使用清单默认值；超出 48–720 × 48–1200 将返回 <code>PARAM_INVALID</code>。</p>
+<p>更新：</p>
+<pre><code class="language-js">await minibot.overlay.update(overlay.overlayId, {
+  width: 160,
+  height: 160,
+  visible: true,
+  visibilityPolicy: 'foreground',
+  dx: 12,
+  dy: -8
+});
+</code></pre>
+<p>关闭：</p>
+<pre><code class="language-js">await minibot.overlay.close(overlay.overlayId);
+// 浮层页面内可省略 id，关闭自身
+await minibot.overlay.close();
+</code></pre>
+<p>浮层页面通过 <code>self()</code> 读取 <code>OverlaySelfInfo</code>，额外包含 <code>density</code>、<code>foreground</code>，其中 <code>x</code> / <code>y</code> 为当前显示位置，单位为 dp：</p>
+<pre><code class="language-js">const self = await minibot.overlay.self();
+// { overlayId, pluginId, width, height, x, y, density, draggable, snap, visibilityPolicy, foreground }
+</code></pre>
+<p>窗口位置按 <code>pluginId:surfaceId</code> 自动保存，重启或自动拉起时恢复。插件拖动窗口或调用 <code>moveBy</code> 后均会更新保存位置。</p>
+<h2 id="进程接口">进程接口</h2>
+<p>进程通过 SDK 的 <code>hostCall</code> 调用：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>参数</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host.overlay.create</code></td>
+<td><code>{surface?, width?, height?, visibilityPolicy?}</code></td>
+<td>返回 <code>{overlayId, width, height, ...}</code></td>
+</tr>
+<tr>
+<td><code>host.overlay.update</code></td>
+<td><code>{overlayId, width?, height?, visible?, visibilityPolicy?, dx?, dy?}</code></td>
+<td>更新窗口</td>
+</tr>
+<tr>
+<td><code>host.overlay.close</code></td>
+<td><code>{overlayId}</code> 或 <code>{surface}</code></td>
+<td>关闭窗口</td>
+</tr>
+<tr>
+<td><code>host.overlay.postMessage</code></td>
+<td><code>{overlayId?, surface?, payload}</code></td>
+<td>向浮层页面发送消息</td>
+</tr>
+</tbody>
+</table>
+<h2 id="浮层页面">浮层页面</h2>
+<p>浮层同样推荐使用 Vue + TypeScript，HTML 壳与构建方式见<a href="source-build.html#页面构建">页面构建</a>。浮层的 <code>context()</code> 返回 <code>MiniBotOverlayContext</code>，只有插件与窗口标识、页面 ID、版本和密度，不提供普通页面的工作区与文件接口；需要处理文件或命令时通过消息交给插件进程。</p>
+<p>透明背景与交互可写在 <code>.vue</code> 中：</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;button class=&quot;ball&quot; @click=&quot;sendClick&quot;&gt;{{ label }}&lt;/button&gt;
+&lt;/template&gt;
+
+&lt;script setup lang=&quot;ts&quot;&gt;
+import { onMounted, onUnmounted, ref } from 'vue';
+
+const label = ref('AI');
+const off = minibot.overlay.onMessage((message) =&gt; {
+  if (message.type === 'state') label.value = message.busy ? '忙' : 'AI';
+});
+
+onMounted(async () =&gt; {
+  const rect = document.body.getBoundingClientRect();
+  await minibot.overlay.setDragRegion({left: 0, top: 0, width: rect.width, height: rect.height});
+});
+onUnmounted(off);
+
+async function sendClick(): Promise&lt;void&gt; {
+  await minibot.overlay.postMessage({type: 'click'});
+}
+&lt;/script&gt;
+
+&lt;style&gt;
+html, body, #app {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+.ball {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 50%;
+  background: var(--minibot-primary);
+  color: var(--minibot-on-surface);
+}
+&lt;/style&gt;
+</code></pre>
+<p>浮层页面支持以下操作：</p>
+<ul>
+<li><code>overlay.self()</code> 读取自身 id、尺寸、位置与密度；</li>
+<li><code>overlay.setDragRegion(rect)</code> 声明宿主接管拖拽的区域，单位为 CSS 像素；</li>
+<li><code>overlay.resize(width, height, options?)</code> 调整自身窗口尺寸，单位为 dp；</li>
+<li><code>overlay.setVisibilityPolicy(policy)</code> 设置显示时机；</li>
+<li><code>overlay.moveBy(dx, dy)</code> 请求移动；</li>
+<li><code>overlay.onMessage(handler)</code> 接收 <code>state</code>、<code>resize</code>、<code>appState</code>、<code>click</code>、<code>dragStart</code>、<code>dragEnd</code>、<code>longPress</code>、<code>snap</code>；</li>
+<li><code>overlay.postMessage(payload)</code> 将交互回传至插件进程的 <code>overlay.message</code> handler。</li>
+</ul>
+<p>浮层页面不得调用 Shizuku、Shell 或终端。需要这些能力时，应由浮层通过 <code>postMessage</code> 将请求发送给插件进程执行。</p>
+<h2 id="靠边吸附">靠边吸附</h2>
+<p><code>surface.snap</code> 声明拖动松手后的吸附轴：</p>
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>none</code></td>
+<td>不吸附，松手位置即最终位置，默认</td>
+</tr>
+<tr>
+<td><code>x</code></td>
+<td>吸附到左或右边缘</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td>吸附到上或下边缘</td>
+</tr>
+<tr>
+<td><code>both</code></td>
+<td>吸附到 40dp 内最近的一条边</td>
+</tr>
+</tbody>
+</table>
+<p>只有窗口边缘距离屏幕边缘 40dp 以内时才触发吸附；拖到中间松手会停在原位，不会自动贴边。吸附由宿主完成：松手后取 40dp 内最近的边，以 280ms 过渡移动窗口，并把最终位置写入保存位置。插件不参与窗口几何计算，也不需要知道屏幕尺寸。</p>
+<p>吸附开始时页面收到事件：</p>
+<pre><code class="language-js">{type: 'snap', edge: 'left' | 'right' | 'top' | 'bottom', x, y}
+</code></pre>
+<p><code>x</code>/<code>y</code> 是目标位置的 dp 坐标，与 <code>self()</code> 一致。页面按 <code>edge</code> 切换贴边后的表现，例如翻身朝向、趴下动画、只在靠边半区绘制内容。宿主只保证窗口贴着屏幕边缘，不会让窗口越出屏幕。</p>
+<p><code>dragEnd</code> 的 <code>x</code>/<code>y</code> 同样是 dp，与 <code>snap</code>、<code>self()</code> 保持一致；拖动开始后窗口尚未吸附，需要恢复非贴边形态时监听 <code>dragStart</code>。</p>
+<pre><code class="language-js">let edge = null;
+
+minibot.overlay.onMessage((message) =&gt; {
+  if (message.type === 'snap') {
+    edge = message.edge;
+    document.body.dataset.edge = edge;
+  } else if (message.type === 'dragStart') {
+    edge = null;
+    delete document.body.dataset.edge;
+  }
+});
+</code></pre>
+<p>吸附后调用 <code>overlay.resize</code>，宿主会让窗口继续贴着同一条边；显式传入 <code>options.x</code> 或 <code>options.y</code> 时以传入位置为准。</p>
+<h2 id="尺寸动画">尺寸动画</h2>
+<p><code>overlay.resize</code> 未指定 <code>options</code> 时立即调整；指定 <code>{animate: true}</code> 时，宿主在原窗口内以 280ms 同步过渡尺寸与位置，页面不会重新加载。</p>
+<pre><code class="language-js">await minibot.overlay.resize(320, 480, {animate: true, x: 40, y: 120});
+</code></pre>
+<ul>
+<li><code>options.x/y</code> 为目标位置，单位与 <code>self()</code> 中的位置相同，均为 dp；</li>
+<li>宿主会自动将目标窗口限制在屏幕范围内；</li>
+<li>变形完成后页面收到 <code>{type: "resize", width, height, x, y}</code>，位置为最终 dp 坐标；</li>
+<li>调用返回并不表示动画已经结束；</li>
+<li>系统窗口仅在变形开始和结束时调整布局，中间通过内容裁剪与平移过渡；Android 14 及以上会关闭系统额外的位置过渡；</li>
+<li>页面应使用固定内容尺寸配合裁剪和渐显，避免在动画中反复排版；</li>
+<li>新的尺寸请求会从当前状态继续，关闭窗口时停止动画。</li>
+</ul>
+<h2 id="显示时机">显示时机</h2>
+<p><code>visibilityPolicy</code> 由插件决定，宿主不预设业务：</p>
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>always</code></td>
+<td>始终显示</td>
+</tr>
+<tr>
+<td><code>foreground</code></td>
+<td>仅在 App 前台显示</td>
+</tr>
+<tr>
+<td><code>background</code></td>
+<td>仅在 App 后台显示</td>
+</tr>
+</tbody>
+</table>
+<p>App 前后台状态以 <code>ProcessLifecycleOwner</code> 为准。插件也可轮询 <code>minibot.app.isForeground()</code> 或进程的 <code>host.app.isForeground</code> 自行判断。</p>
+<h2 id="自动启动">自动启动</h2>
+<p>插件可以在 <code>app.started</code> Hook 中读取自身设置，再调用 <code>host.overlay.create</code>。清单中的 Hook 与常驻配置见<a href="tools-runtime.html#常驻与自启动">常驻与自启动</a>，对应 handler 例如：</p>
+<pre><code class="language-ts">import { definePlugin, hostCall } from '@jieapi/plugin-sdk';
+
+definePlugin({
+  handlers: {
+    'hooks.boot': async () =&gt; {
+      const enabled = await hostCall&lt;{content: string}&gt;('host.fs.read', {path: 'data://enabled'})
+        .then((result) =&gt; result.content.trim() === 'true')
+        .catch(() =&gt; false);
+      if (!enabled) return {logs: ['overlay disabled']};
+      await hostCall('host.overlay.create', {
+        surface: 'ball',
+        visibilityPolicy: 'always'
+      });
+      return {logs: ['overlay created']};
+    }
+  }
+});
+</code></pre>
+<p>宿主仅负责在 App 启动时派发事件；是否创建、尺寸与数量均由插件决定。浮层授权未开启或系统权限缺失时，创建将失败并记录日志。</p>
+<h2 id="参考源码">参考源码</h2>
+<p>浮层插件可参考 <a href="https://github.com/jieapi/aicode-plugin-desktop-pet"><code>jieapi/aicode-plugin-desktop-pet</code></a>。</p></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../../assets/nav-data.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

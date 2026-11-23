@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>插件页面与宿主接口 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../../assets/manual.css">
+</head>
+<body data-root="../../" data-page="advanced/plugin/ui-pages.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../../index.html"><img src="../../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><h1 id="插件页面与宿主接口">插件页面与宿主接口</h1>
+<p>推荐使用 <strong>Vue 3 + TypeScript</strong> 编写页面，构建后由 WebView 加载 HTML。页面通过宿主注入的 <code>window.minibot</code> 桥读写数据、执行命令、订阅变化；源码结构见<a href="source-build.html#页面构建">页面构建</a>。</p>
+<p>本篇说明入口行为与页面桥接口。清单字段和槽位取值统一见 <a href="manifest.html">plugin.json 清单参考</a>。</p>
+<h2 id="页面入口">页面入口</h2>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>声明位置</th>
+<th>入口</th>
+<th>典型用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>工作区工具</td>
+<td><code>contributes.workspaceTools</code></td>
+<td>右侧项目工具抽屉，用户添加后打开</td>
+<td>构建、清理、部署、项目状态</td>
+</tr>
+<tr>
+<td>槽位入口</td>
+<td><code>contributes.uiEntries</code></td>
+<td>设置页分组、侧栏底部、聊天顶栏菜单、空态建议、会话长按、文件树长按、编辑器选区菜单、备份页</td>
+<td>记忆管理、快捷动作、工具面板</td>
+</tr>
+<tr>
+<td>插件配置页</td>
+<td><code>configPage</code></td>
+<td>「设置 → 插件」的插件详情中</td>
+<td>插件自身的参数、密钥、开关</td>
+</tr>
+</tbody>
+</table>
+<p>三种页面使用同一套桥和主题，区别在于入口位置与生命周期。</p>
+<h3 id="工作区工具">工作区工具</h3>
+<p>使用 <code>contributes.workspaceTools</code> 声明 <code>pageFile</code>，写法见<a href="manifest.html#workspacetools">工作区工具字段</a>。使用者在右侧项目工具抽屉中添加后打开页面，再触发页面提供的操作。</p>
+<p>短命令使用 <code>minibot.bash</code>，持续任务使用共享终端，接口见<a href="#命令与终端">命令与终端</a>。</p>
+<h3 id="槽位入口">槽位入口</h3>
+<p>使用 <code>contributes.uiEntries</code> 将页面或动作挂到宿主固定位置。<code>page</code> 打开 HTML，<code>handler</code> 调用 runtime 的 <code>ui.invoke</code>；槽位取值、入口数量及组合规则见<a href="manifest.html#uientries">槽位字段</a>。<code>backup.data</code> 是宿主渲染的备份数据开关，流程见<a href="hooks.html#备份与还原事件">备份与还原事件</a>。</p>
+<p>动作入口可用 <code>confirm: true</code> 在执行前弹确认框。handler 返回 <code>{message: "..."}</code> 时，宿主会用 toast 显示；失败应抛出异常，由 SDK 转为 JSON-RPC error。动作的 <code>args</code> 包含 <code>entryId</code>、<code>slot</code>，以及当前槽位提供的 <code>sessionId</code>、<code>path</code>、<code>isDirectory</code>、<code>selection</code>、<code>language</code>、<code>lineStart</code>、<code>lineEnd</code>。handler 可以调用 <code>host.*</code>。</p>
+<p>侧栏底部最多内联展示 3 条，其余收进「更多插件」；顶栏菜单没有插件项时整段隐藏。</p>
+<p>安装后入口立即出现，副标题标明插件来源；停用或卸载插件后入口消失。大屏下从侧栏、顶栏、会话菜单或文件树打开的页面在右侧工作台内展示，设置页入口沿用设置页自己的分栏布局，窄屏使用全屏页面；编辑器选区入口在编辑器浮动菜单内打开。</p>
+<p>文件树/编辑器动作的 <code>path</code> 是当前执行环境的真实路径：本地模式为容器内路径，SSH 模式为远端服务器路径，可直接传给 <code>host.fs.*</code>；目录项同时带 <code>isDirectory</code>。</p>
+<h3 id="插件配置页">插件配置页</h3>
+<p>通过 <code>configPage</code> 指定页面，声明位置见<a href="manifest.html#configpage">配置页字段</a>。</p>
+<p>配置页仅出现在「设置 → 插件」的插件详情中，与启停、卸载等原生项通过分段控件切换，不会混入设置主菜单。配置页适用于填写 API Key、开关和选项，仅在插件启用且首次切到配置标签时加载；停留在原生管理标签时不会提前执行页面脚本。停用、卸载或替换安装会使旧页面桥失效并取消该桥的在途任务、文件订阅和模型流；重新启用后需要重新打开页面，旧桥不会恢复授权。</p>
+<h3 id="一个加载入口承载多个视图">一个加载入口承载多个视图</h3>
+<p>多个入口可共用 HTML 壳和启动脚本：</p>
+<ol>
+<li>将 <code>uiEntries[].page</code> 与 <code>configPage</code> 指向同一个 HTML 加载器。</li>
+<li>用 <code>minibot.context().pageId</code> 区分入口，配置页的值为 <code>config</code>。</li>
+<li>按入口选择 Vue Router 的 hash 路由，各视图拆为独立 <code>.vue</code> 文件并共用样式。</li>
+</ol>
+<p>宿主仍按入口分别创建页面桥与缓存；不同入口可以直接打开各自视图。</p>
+<h2 id="加载资源">加载资源</h2>
+<p>HTML 壳的完整写法见<a href="source-build.html#html-壳">页面构建</a>。<code>/__minibot/theme.css</code> 提供主题变量，<code>/__minibot/minibot.js</code> 注入页面桥，<code>/__minibot/vue.global.prod.js</code> 与 <code>minibot-ui-vue.js</code> 提供 Vue 和组件库。</p>
+<p>页面入口使用包内 <code>.html</code> / <code>.htm</code>，资源经宿主虚拟域加载；页面大小限制见<a href="packaging.html#安装限制">安装限制</a>。</p>
+<h2 id="页面路由">页面路由</h2>
+<p>宿主还提供 <code>/__minibot/vue-router.global.prod.js</code>（Vue Router 4.x 的官方 global prod 构建）。需要路由的页面在 Vue 之后引入它：</p>
+<pre><code class="language-html">&lt;script src=&quot;/__minibot/vue.global.prod.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;/__minibot/vue-router.global.prod.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>通过 <code>VueRouter.createRouter({history: VueRouter.createWebHashHistory(), routes})</code> 创建路由，并在组件中放置 <code>&lt;router-view&gt;</code>。必须使用 hash 模式：<code>createWebHistory()</code> 生成的路径会被 WebView 主框架导航拦截。页面的返回处理见<a href="#返回键">返回键</a>。</p>
+<h2 id="安全边界与资源缓存">安全边界与资源缓存</h2>
+<p>插件页面运行在虚拟域 <code>https://appassets.androidplatform.net</code> 下，宿主对脚本来源与桥的可见范围做了限制：</p>
+<ul>
+<li>页面脚本应随插件包提供。HTML 响应带 <code>Content-Security-Policy</code>：<code>script-src</code> 只允许虚拟域与内联脚本，远程脚本、<code>&lt;iframe&gt;</code> 与 <code>&lt;object&gt;</code> 会被直接阻断；需要联网时使用 <code>fetch</code> / <code>XMLHttpRequest</code>（<code>connect-src</code> 允许 http/https）或 <code>minibot.http.request</code>。</li>
+<li>桥 <code>window.minibot</code> 只对虚拟域主 frame 生效。WebView 支持 WebMessageListener 时，宿主在回调里校验 <code>isMainFrame</code> 与来源的 scheme/host，子 frame 与其他来源的调用会被丢弃；系统不支持时回退 <code>addJavascriptInterface</code>，此时桥对所有 frame 可见，安全性依赖上述 CSP 只允许包内脚本执行。</li>
+<li>插件包资源与宿主 <code>/__minibot/</code> 资源在进程内缓存字节，避免每次拦截请求都读盘：插件资源按 canonical path + mtime + size 缓存，宿主资源按路径缓存，LRU 上限约 64 项 / 8 MiB。响应头仍为 <code>Cache-Control: no-store</code>，插件同版本覆盖与 APK 更新后不会命中旧浏览器缓存；<code>/__minibot/theme.css</code> 跟随主题动态生成，不缓存。</li>
+</ul>
+<h2 id="宿主接口">宿主接口</h2>
+<p>宿主请求返回 Promise，失败时 reject 一个包含 <code>code</code> 与 <code>message</code> 的 Error。<code>events.on</code> 同步返回取消函数，<code>ui.onBack</code> 返回的 Promise 解析为取消函数。每次宿主请求都会校验页面所属插件仍启用且属于同一次安装，停用或替换后的旧页面不能继续调用宿主能力。</p>
+<p>TypeScript 页面可直接使用 SDK 的 <code>@jieapi/plugin-sdk/page</code> 入口：它按本页的方法表声明了 <code>window.minibot</code>，并为 <code>fs.changed</code>、<code>chat.run.finished</code> 等事件提供 payload 类型，配置方式见<a href="source-build.html#页面类型提示">页面类型提示</a>。</p>
+<h3 id="基础">基础</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minibot.context()</code></td>
+<td>返回 <code>pluginId</code>、<code>pageId</code>、<code>slot</code>、<code>sessionId</code>、<code>path</code>、<code>isDirectory</code>、<code>selection</code>、<code>language</code>、<code>lineStart</code>、<code>lineEnd</code>、<code>version</code>、<code>languageTag</code>、<code>theme</code>、<code>workspaceName</code>、<code>contextKey</code>、<code>visible</code>、<code>home</code>、<code>workspace</code>、<code>dataDir</code>；未使用的字段不出现</td>
+</tr>
+<tr>
+<td><code>minibot.toast(message)</code></td>
+<td>轻量提示</td>
+</tr>
+<tr>
+<td><code>minibot.tip({title?, text, action?{label, handler}})</code></td>
+<td>在对话中显示可关闭提示条；按钮点击回调同插件进程的 <code>handler</code></td>
+</tr>
+<tr>
+<td><code>minibot.app.isForeground()</code></td>
+<td>App 当前是否处于前台（有 Activity 处于 STARTED）</td>
+</tr>
+<tr>
+<td><code>minibot.ui.close()</code></td>
+<td>关闭插件页并回到打开前的位置（设置页、侧栏或顶栏对应的聊天页）</td>
+</tr>
+<tr>
+<td><code>minibot.ui.setOverlay(visible, rect)</code></td>
+<td>打开或关闭页面内全屏弹层并上报矩形；宿主在全局背景图上按矩形挖孔</td>
+</tr>
+<tr>
+<td><code>minibot.ui.onBack(handler)</code></td>
+<td>接管页面内返回；<code>handler</code> 同步返回 <code>true</code> 表示已处理，Promise 解析为注销函数</td>
+</tr>
+<tr>
+<td><code>minibot.applyTheme(variables)</code></td>
+<td>设置 CSS 变量并派发 <code>minibot:theme</code> 事件</td>
+</tr>
+</tbody>
+</table>
+<p>普通页面的上下文类型为 <code>MiniBotPageContext</code>；浮层页面返回 <code>MiniBotOverlayContext</code>，仅含 <code>pluginId</code>、<code>overlayId</code>、<code>pageId</code>、<code>version</code>、<code>density</code>。TypeScript 中可用 <code>'overlayId' in context</code> 区分两者，浮层能力见<a href="overlay.html#浮层页面">浮层页面</a>。</p>
+<h3 id="文件">文件</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minibot.fs.read(path, options?)</code></td>
+<td>读取文件，返回 <code>{content, size}</code></td>
+</tr>
+<tr>
+<td><code>minibot.fs.write(path, content, options?)</code></td>
+<td>原子写入文件</td>
+</tr>
+<tr>
+<td><code>minibot.fs.list(path, options?)</code></td>
+<td>列出目录，返回 <code>{entries: [{name, isDir, size}]}</code></td>
+</tr>
+<tr>
+<td><code>minibot.fs.delete(path, options?)</code></td>
+<td>删除文件或目录</td>
+</tr>
+<tr>
+<td><code>minibot.fs.stat(path, options?)</code></td>
+<td>返回 <code>{exists, isDir, size}</code></td>
+</tr>
+<tr>
+<td><code>minibot.fs.mkdir(path, options?)</code></td>
+<td>创建目录（含父目录）</td>
+</tr>
+<tr>
+<td><code>minibot.fs.rename(from, to, options?)</code></td>
+<td>移动/重命名；目标已存在时返回 <code>FILE_EXISTS</code></td>
+</tr>
+<tr>
+<td><code>minibot.fs.copy(from, to, options?)</code></td>
+<td>复制文件或目录；<code>options.overwrite</code> 默认 false</td>
+</tr>
+<tr>
+<td><code>minibot.fs.append(path, content, options?)</code></td>
+<td>追加文本；文件总大小不得超过 1 MiB</td>
+</tr>
+<tr>
+<td><code>minibot.fs.readBinary(path, options?)</code></td>
+<td>读取二进制，返回 <code>{base64, size}</code>；上限 512 KiB</td>
+</tr>
+<tr>
+<td><code>minibot.fs.writeBinary(path, base64, options?)</code></td>
+<td>写入 Base64 二进制；上限 1 MiB</td>
+</tr>
+<tr>
+<td><code>minibot.fs.watch(path, options?, handler)</code></td>
+<td>订阅文件来源变化，Promise 解析为取消订阅函数</td>
+</tr>
+</tbody>
+</table>
+<p>文件路径是当前执行环境的真实绝对路径：本地模式为容器内路径，SSH 模式为远端服务器路径。<code>~</code> 展开到当前 home，裸相对路径挂到工作区根。插件自己的数据目录有稳定的虚拟根 <code>data://</code>，与插件 ID 和执行环境无关。</p>
+<table>
+<thead>
+<tr>
+<th>位置</th>
+<th>路径写法</th>
+<th>读写</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>插件自身数据目录，卸载时清理</td>
+<td><code>data://…</code> 或 <code>context().dataDir</code></td>
+<td>读写</td>
+</tr>
+<tr>
+<td>当前工作区</td>
+<td><code>context().workspace</code></td>
+<td>读写</td>
+</tr>
+<tr>
+<td>AI 配置目录</td>
+<td><code>context().home + '/.minibot'</code></td>
+<td>读写</td>
+</tr>
+<tr>
+<td>容器或服务器上的其它路径</td>
+<td>直接写绝对路径</td>
+<td>读写</td>
+</tr>
+</tbody>
+</table>
+<p>单次读取上限 512 KiB，写入上限 1 MiB，目录最多返回 500 条。本地模式下宿主只映射容器 rootfs、工作区与 <code>~/.minibot</code>，App 自身的其它私有目录没有对应的容器路径，因此不可达。</p>
+<p>文件方法可在最后一个 <code>options</code> 参数中传入 <code>{contextKey}</code>。上下文已经变化时请求返回 <code>STALE_CONTEXT</code>，用于拦截仍在排队的旧项目操作：</p>
+<pre><code class="language-js">const ctx = await minibot.context();
+const file = await minibot.fs.read(ctx.workspace + '/README.md', {contextKey: ctx.contextKey});
+</code></pre>
+<h3 id="命令与终端">命令与终端</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minibot.bash(command, options?)</code></td>
+<td>在当前工作区执行一次性命令，返回 <code>{output, exitCode, truncated}</code>；<code>options.timeout</code> 以秒计，默认 30、上限 300</td>
+</tr>
+<tr>
+<td><code>minibot.terminal.run(command, options?)</code></td>
+<td>创建共享终端标签，返回 <code>{tabId, state}</code>；<code>options.title</code> 可选</td>
+</tr>
+<tr>
+<td><code>minibot.terminal.poll(tabId, offset)</code></td>
+<td>返回 <code>{output, offset, state, exitCode?, truncated}</code>；<code>state</code> 为 <code>running</code> / <code>finished</code> / <code>cancelled</code></td>
+</tr>
+<tr>
+<td><code>minibot.terminal.stop(tabId)</code></td>
+<td>发送 Ctrl-C；2 秒仍未退出则关闭标签</td>
+</tr>
+<tr>
+<td><code>minibot.terminal.close(tabId)</code></td>
+<td>关闭标签</td>
+</tr>
+<tr>
+<td><code>minibot.terminal.write(tabId, text, options?)</code></td>
+<td>向标签写入输入并回车；<code>options.appendNewline</code> 默认 true，文本上限 4000 字符</td>
+</tr>
+<tr>
+<td><code>minibot.terminal.list()</code></td>
+<td>列出当前插件创建的标签 <code>{tabId, title, command, state}</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>minibot.bash</code> 适用于版本检测、状态查询等短命令，不应启动常驻进程或交互式程序。命令执行环境的初始化由终端页负责；未初始化时退出码为 <code>null</code>，输出中会包含引导提示。</p>
+<p>终端输出按偏移轮询；宿主仅保留最近 128 KiB，超出后 <code>truncated</code> 为 true。关闭页面不会停止命令；插件停用或卸载时，宿主将关闭其创建的全部标签。</p>
+<p>标签默认不在终端页显示，使用者可在「设置 → 终端设置 → 显示插件运行」开启。标签归属于创建它的插件，其他插件与 AI 的终端工具不得操作。</p>
+<h3 id="会话与消息">会话与消息</h3>
+<p>插件可以在当前工作区创建会话、读取会话与消息，并向会话发送一条用户消息来启动 AI 轮次。发送的消息与手动输入完全同路径：会正常落库、进入上下文、消耗 token，并经过工具授权、PLAN/AUTO 模式、hooks 与队列，不会绕过宿主审批。</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minibot.chat.listSessions(options?)</code></td>
+<td>返回 <code>{sessions}</code>；<code>options.includeSubagents</code> 默认 false，<code>options.limit</code> 默认 50、上限 200</td>
+</tr>
+<tr>
+<td><code>minibot.chat.createSession(options?)</code></td>
+<td>返回 <code>{session}</code>；<code>options.title</code> 最多 100 字，<code>options.mode</code> 仅支持 <code>build</code> / <code>plan</code>（<code>auto</code> 只能由使用者手动选择）</td>
+</tr>
+<tr>
+<td><code>minibot.chat.listMessages(sessionId, options?)</code></td>
+<td>返回 <code>{sessionId, messages, hasMore}</code>；<code>options.limit</code> 默认 50、上限 200，<code>options.before</code> / <code>options.after</code> 为毫秒时间戳，二者互斥</td>
+</tr>
+<tr>
+<td><code>minibot.chat.sendMessage(sessionId, text)</code></td>
+<td>向会话追加用户消息并启动 AI 轮次；<code>text</code> 最多 32000 字符</td>
+</tr>
+<tr>
+<td><code>minibot.chat.setDraft(text, options?)</code></td>
+<td>把文本写入输入框；<code>options.sessionId</code> 缺省当前会话，<code>options.append</code> 为 true 时追加。需要聊天页存活</td>
+</tr>
+<tr>
+<td><code>minibot.chat.stop(sessionId)</code></td>
+<td>停止该会话正在运行的 AI 轮次</td>
+</tr>
+<tr>
+<td><code>minibot.chat.openSession(sessionId)</code></td>
+<td>把聊天页切换到该会话</td>
+</tr>
+<tr>
+<td><code>minibot.chat.getSession(sessionId)</code></td>
+<td>返回单个会话</td>
+</tr>
+<tr>
+<td><code>minibot.chat.renameSession(sessionId, title)</code></td>
+<td>重命名；标题最多 100 字</td>
+</tr>
+<tr>
+<td><code>minibot.chat.pinSession(sessionId, pinned)</code></td>
+<td>置顶/取消置顶</td>
+</tr>
+<tr>
+<td><code>minibot.chat.deleteSession(sessionId)</code></td>
+<td>返回 <code>{sessionId, accepted}</code>，表示删除请求已入队；由聊天页取消在途任务并删除会话及消息</td>
+</tr>
+<tr>
+<td><code>minibot.chat.getRunState(sessionId)</code></td>
+<td>返回 <code>{sessionId, run}</code>，<code>run</code> 含 <code>running</code>、<code>status</code>、<code>startedAt</code>、<code>finishedAt</code>、<code>error?</code></td>
+</tr>
+<tr>
+<td><code>minibot.chat.waitForRun(sessionId, options?)</code></td>
+<td>等待本轮结束；<code>options.timeoutMs</code> 默认 120000、范围 1000–600000；返回 <code>{timedOut, run}</code></td>
+</tr>
+<tr>
+<td><code>minibot.chat.listApprovals(sessionId)</code></td>
+<td>返回 <code>{tool, question, plan}</code>，分别对应待确认工具、提问与计划审批</td>
+</tr>
+<tr>
+<td><code>minibot.chat.resolveToolApproval(sessionId, requestId, choice)</code></td>
+<td><code>choice</code> 为 <code>once</code> / <code>always</code> / <code>reject</code>；<code>always</code> 仅在可记忆时可用</td>
+</tr>
+<tr>
+<td><code>minibot.chat.resolveQuestion(sessionId, requestId, answers)</code></td>
+<td><code>answers</code> 为 <code>[{question, selected: [...], customText?}]</code></td>
+</tr>
+<tr>
+<td><code>minibot.chat.resolvePlanApproval(sessionId, requestId, choice)</code></td>
+<td><code>choice</code> 为 <code>approve</code> / <code>refine</code></td>
+</tr>
+</tbody>
+</table>
+<p>会话与消息读取仅限当前工作区；跨工作区的会话 id 返回 <code>SESSION_FORBIDDEN</code>。<code>sendMessage</code> / <code>stop</code> / <code>openSession</code> 需要聊天页 ViewModel 存活（App 主界面存在时即满足），否则返回 <code>CHAT_UI_UNAVAILABLE</code>；请求队列已满时返回 <code>CHAT_BUSY</code>。常见错误码还包括 <code>PLUGIN_INACTIVE</code>、<code>WORKSPACE_UNAVAILABLE</code>、<code>SESSION_NOT_FOUND</code>、<code>MODE_UNSUPPORTED</code> 与 <code>PARAM_INVALID</code>。</p>
+<p><code>sendMessage</code> 只表示请求已入队，不等待 AI 完成。插件可以监听页面的 <code>chat.run.finished</code> 事件、已有的 <code>agent.run.finished</code> hook（payload 含 <code>sessionId</code>），或调用 <code>waitForRun</code> / <code>listMessages</code>。消息对象包含 <code>id</code>、<code>role</code>、<code>content</code>、<code>timestamp</code>、<code>toolName</code>、<code>isError</code>、压缩标记、token 计数，以及可选的 <code>reasoning</code>（最多 8000 字符）、<code>toolCalls</code>（最多 50 条，单条参数最多 4000 字符）与 <code>attachments</code>（最多 20 条，不含宿主本地路径）。</p>
+<pre><code class="language-js">const created = await minibot.chat.createSession({title: '插件快捷提问', mode: 'build'});
+await minibot.chat.openSession(created.session.id);
+await minibot.chat.sendMessage(created.session.id, '用一句话介绍当前项目');
+</code></pre>
+<p><code>sendMessage</code> 启动的 AI 可能调用需要授权的工具。插件页面是全屏 WebView 时，聊天页的授权弹窗不可见；插件应声明 <code>agent.permission.review</code> 并在页面内展示允许/拒绝卡片，或调用 <code>listApprovals</code> + <code>resolveToolApproval</code> 在页面内处理。计划审批与 <code>AskUserQuestion</code> 也分别通过 <code>plan</code> / <code>question</code> 与对应 resolve 方法处理。否则轮次会停在等待授权，直到用户处理或超时。</p>
+<p>页面还会收到 <code>chat.run.started</code> / <code>chat.run.finished</code> 事件（payload 带 <code>sessionId</code>、<code>status</code>、<code>error?</code>），不需要插件 runtime 就能判断轮次是否结束。</p>
+<h3 id="模型句柄">模型句柄</h3>
+<p>声明 <code>contributes.modelAccess</code> 后，使用 <code>minibot.model.*</code> 直接调用已配置模型。方法表、消息格式、流式事件与工具循环统一见<a href="model-handles.html">模型句柄与流式调用</a>。</p>
+<h3 id="插件提供商">插件提供商</h3>
+<p>使用 <code>minibot.providers.*</code> 维护本插件声明的提供商，接口见<a href="shizuku-providers.html#由插件维护模型与凭据">模型与凭据维护</a>。这与读取已配置模型的 <code>model.*</code> 是两类能力，不需要 <code>contributes.modelAccess</code>。</p>
+<h3 id="工具与-mcp">工具与 MCP</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minibot.tools.list(options?)</code></td>
+<td>列出宿主注册工具；<code>options.includeSchema</code> 为 true 时附带参数 schema</td>
+</tr>
+<tr>
+<td><code>minibot.tools.execute(name, args, options?)</code></td>
+<td>代执行一次工具调用；<code>options.sessionId</code> / <code>context</code> / <code>timeoutMs</code> 可选</td>
+</tr>
+<tr>
+<td><code>minibot.tools.pending(sessionId?)</code></td>
+<td>返回 <code>{approval}</code>；没有待审批请求时 <code>approval</code> 为 <code>null</code></td>
+</tr>
+<tr>
+<td><code>minibot.tools.resolve(requestId, choice)</code></td>
+<td>回传审批结果，<code>choice</code> 为 <code>once</code> / <code>always</code> / <code>reject</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>execute</code> 只接受内置与 MCP 工具，权限策略为 ASK 时挂起等待页面处理，不会弹出聊天页审批框。页面应轮询 <code>pending</code> 并自行展示审批条，再调用 <code>resolve</code> 回传决定。</p>
+<p>会话命名空间、工具范围、结果格式与错误码统一见<a href="tools-runtime.html#工具目录与代执行">工具目录与代执行</a>，页面审批用法见<a href="model-handles.html#审批流程">审批流程</a>。<code>minibot.mcp.status()</code> 返回 MCP server 连接状态。</p>
+<h3 id="系统密钥与网络">系统、密钥与网络</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minibot.clipboard.read()</code> / <code>write(text)</code></td>
+<td>读取或写入系统剪贴板，上限 1 MiB</td>
+</tr>
+<tr>
+<td><code>minibot.share.text(text, {title?})</code></td>
+<td>拉起系统分享面板；文本最多 100000 字符</td>
+</tr>
+<tr>
+<td><code>minibot.ui.openUrl(url)</code></td>
+<td>用系统浏览器打开 http/https 链接；最长 4096 字符</td>
+</tr>
+<tr>
+<td><code>minibot.app.info()</code></td>
+<td>返回包名、版本、SDK、语言与前后台状态</td>
+</tr>
+<tr>
+<td><code>minibot.log.write(level, message, {tag?})</code></td>
+<td>写宿主日志；<code>level</code> 为 debug/info/warn/error，正文最多 2000 字符</td>
+</tr>
+<tr>
+<td><code>minibot.secrets.get(key)</code> / <code>set(key, value)</code> / <code>delete(key)</code> / <code>list()</code></td>
+<td>插件私有加密键值存储；值最多 64 KiB，<code>list</code> 只返回键名</td>
+</tr>
+<tr>
+<td><code>minibot.http.request({url, method?, headers?, body?, timeout?})</code></td>
+<td>宿主代理 HTTP 请求；仅 http/https，不跟随重定向，不注入宿主凭据；响应体上限 1 MiB</td>
+</tr>
+</tbody>
+</table>
+<p>密钥值由 Android Keystore 加密后存放在插件私有目录，明文只在请求瞬间存在于内存；不要在 <code>data://</code> 明文保存 API Key。HTTP 请求的 headers 由插件自行提供，插件应避免把密钥写进日志。</p>
+<h3 id="进程调用">进程调用</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minibot.invoke(handler, args)</code></td>
+<td>调用同一插件常驻进程的 handler，返回其 <code>result</code></td>
+</tr>
+</tbody>
+</table>
+<p>仅允许调用当前页面对应插件的进程，不可跨插件。宿主会按需启动插件 runtime，单次等待上限为 60 秒。插件进程需处理 <code>ui.invoke</code>。</p>
+<h3 id="shizuku">Shizuku</h3>
+<p>使用 <code>minibot.shizuku.exec</code> 执行 Android 命令，声明、授权与参数见 <a href="shizuku-providers.html#shizuku">Shizuku</a>。</p>
+<h3 id="浮层">浮层</h3>
+<p>使用 <code>minibot.overlay.*</code> 管理窗口、尺寸、拖拽和消息，接口与浮层专用限制见<a href="overlay.html">系统浮层</a>。</p>
+<h3 id="事件">事件</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minibot.events.on(handler)</code></td>
+<td>监听插件进程推送的事件和宿主生命周期事件，返回取消订阅函数</td>
+</tr>
+</tbody>
+</table>
+<p>事件包括插件进程发送的 <code>plugin.event</code>、文件订阅的 <code>fs.changed</code>，以及页面的 <code>ui.lifecycle</code>。详细用法参见<a href="ui-components.html">页面样式、组件与事件</a>。</p>
+<h2 id="返回键">返回键</h2>
+<p>返回键按以下顺序处理：</p>
+<ol>
+<li>WebView 自身历史（如 hash 路由）；</li>
+<li><code>minibot.ui.onBack</code> 注册的处理器，后注册的优先；</li>
+<li>退出插件页。</li>
+</ol>
+<p>页面存在多层视图时，使用 <code>onBack</code> 接管返回；回到最外层时返回 <code>false</code>，交由宿主退出。顶栏自绘的返回按钮应在首页调用 <code>minibot.ui.close()</code>，在子页调用自身的路由返回。</p>
+<pre><code class="language-js">const off = await minibot.ui.onBack(() =&gt; {
+  if (drawerOpen) {
+    drawerOpen = false;
+    return true;
+  }
+  return false;
+});
+</code></pre>
+<h2 id="页面与进程">页面与进程</h2>
+<table>
+<thead>
+<tr>
+<th>页面（WebView）</th>
+<th>插件运行时（容器进程）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>具有 DOM，适合表单、列表、预览和交互</td>
+<td>不具有 DOM，适合文件处理、后台任务与跨页面共享状态</td>
+</tr>
+<tr>
+<td>通过 <code>minibot.fs</code> 等宿主桥访问执行环境</td>
+<td>通过 SDK 的 <code>hostCall</code> 或进程自身能力处理逻辑</td>
+</tr>
+<tr>
+<td>用 <code>minibot.invoke</code> 调用同插件 handler</td>
+<td>响应 <code>ui.invoke</code>，也可主动推送页面事件</td>
+</tr>
+</tbody>
+</table>
+<p>关闭页面不会停止运行时，进程回收与常驻行为见<a href="tools-runtime.html#运行时入口">运行时入口</a>。配置页的 Vue 写法统一见<a href="source-build.html#单文件组件">单文件组件</a>。</p>
+<p>需要在卸载后保留的配置，可放在 <code>context().home + '/.minibot'</code> 下插件自己的命名空间内；<code>data://</code> 数据随卸载清理。</p></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../../assets/nav-data.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>隐私政策 · Mini-AIBOT</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body data-root="" data-page="privacy.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><h1 id="mini-aibot">Mini-AIBOT 隐私政策</h1>
+<p><strong>最后更新：2026 年 11 月 23 日</strong></p>
+<p>Mini-AIBOT 是 MiniMe-bot 项目的 Android 客户端，由 Lisir2002 维护。本政策说明本应用如何处理你的信息。本应用依据 GPL-3.0 开源，基于 jieapi/AiCode 二次开发。</p>
+<p><strong>本项目不运营自有业务后端，不集中收集或保存你的聊天内容、工作区文件和凭据，也不出售这些数据。</strong> 应用主要在设备本地保存配置和会话；但使用 AI、联网搜索、远程服务器、远程备份等功能时，相关内容会发送到你选择的第三方服务。应用也会为更新和获取公开配置发起网络请求。</p>
+<h2 id="_1">一、账号与信息收集</h2>
+<ul>
+<li>本应用不设自有账号系统，无需注册 Mini-AIBOT 账号。GitHub 等第三方集成功能可能需要登录或授权相应服务，并在设备上保存授权凭据。</li>
+<li>本应用不内置统计、埋点、广告或崩溃上报 SDK，不会为使用分析或广告目的自动上传操作记录、聊天内容或日志。</li>
+<li>应用会在本地记录运行和崩溃诊断信息，本地记录不等于自动上传。</li>
+<li>维护者不会通过本应用远程读取你的设备数据。如果你主动提交 Issue、复制崩溃信息或分享日志，其中的内容会提供给你选择的接收方；请先检查并移除敏感信息。</li>
+</ul>
+<h2 id="_2">二、数据的保存位置与日志</h2>
+<p>本应用处理的数据包括：</p>
+<ul>
+<li><strong>配置与凭据</strong>：模型供应商、API Key、服务端点，以及你配置的服务器、Git、备份等连接和授权信息。</li>
+<li><strong>聊天与 AI 上下文</strong>：聊天记录、会话历史、附件、项目规则、记忆及工具执行结果等。</li>
+<li><strong>工作区与环境文件</strong>：代码、文件、容器镜像和本地 Linux 环境数据。</li>
+<li><strong>偏好设置、诊断日志与备份文件</strong>。</li>
+</ul>
+<p>配置和会话等数据主要保存在应用私有存储中；日志可能保存在应用专属的外部存储目录。默认本地工作区位于应用私有目录；你选择的<strong>外部工作区</strong>保存在相应设备目录中，<strong>远程工作区</strong>保存在目标服务器上。导出文件和备份保存在你选择的位置，不一定处于应用私有目录。</p>
+<p><strong>日志可能包含敏感内容。</strong> AI 请求与响应日志会记录请求地址、对话上下文、代码、工具结果、模型回复和错误信息等。应用可能对部分媒体内容作脱敏处理，但不保证识别或移除文本、网址及工具输出中的密码、令牌或个人信息。崩溃诊断还可能包含设备型号、系统版本、内存情况和错误堆栈，不会自动上报。</p>
+<p>运行日志和 AI 日志设有容量限制及旧文件清理机制；初始化日志时会清理超过 7 天未更新的相应日志文件。这不是所有数据在 7 天后必然删除的承诺，仍在更新的日志、会话、导出副本和备份有各自的生命周期。删除聊天不等于同步删除已经生成的日志或备份。</p>
+<h2 id="_3">三、联网与向第三方传输数据</h2>
+<h3 id="_4">基础联网请求</h3>
+<ul>
+<li><strong>公开配置与目录</strong>：应用启动时会根据缓存情况获取模型元数据、供应商预设和容器镜像目录，请求可能经过 GitHub 及 jsDelivr 等分发节点。这些请求用于下载公开数据，不附带聊天、工作区内容或 API Key。</li>
+<li><strong>检查与下载更新</strong>：自动检查更新默认开启，可在设置中关闭。检查会请求 GitHub Releases 接口；更新包下载可能经过设置中的第三方镜像，也可修改或留空以直连 GitHub。</li>
+<li><strong>环境与网络功能</strong>：下载容器镜像、安装软件包或使用开发工具时，会访问相应镜像站、软件仓库或目标服务；代理连通性检测也可能请求外部检测站点。</li>
+</ul>
+<p>这些服务及网络中间节点可能收到 IP 地址、请求时间、请求头和资源路径等网络信息。不上传聊天内容不等于不产生网络信息。</p>
+<h3 id="_5">使用功能产生的数据传输</h3>
+<ul>
+<li><strong>AI 模型供应商</strong>：对话内容及相关上下文会发送到你选择的模型服务。除手动发送的代码、文件和图片外，上下文还可能包括自动加载的项目规则、记忆与技能清单，以及 AI 通过工具读取的文件、命令输出和其他执行结果。标题生成、上下文压缩等辅助 AI 功能也可能提交相关内容。生图功能使用你为其配置的服务。</li>
+<li><strong>MCP、搜索与浏览器</strong>：你启用的 MCP 服务器、搜索服务和网页访问目标会按其配置接收请求内容。浏览器自动化只访问你或 AI 指定的页面。</li>
+<li><strong>Git、SSH、同步与备份</strong>：仅在主动配置并使用相应功能时，向对应主机发送仓库、文件或备份数据。凭据由你提供并保存在本地，除非你开启相应同步或注入功能。</li>
+<li><strong>插件</strong>：插件可在容器内运行并向其声明的服务发起请求；安装前请查看插件来源与权限说明。</li>
+</ul>
+<h2 id="_6">四、设备权限</h2>
+<p>应用只在你授权后使用相应系统能力，例如存储访问（读取和保存工作区、附件与备份）、安装未知应用（安装 APK）、通知（任务完成提醒）、电池优化白名单（保持后台任务）、相机与相册（发送图片）。你可以在系统设置中随时撤销权限；撤销后相关功能可能不可用。</p>
+<p>Shizuku、无障碍或设备管理类能力仅在用户主动授权并启用时使用，用于执行你明确发起的系统操作。</p>
+<h2 id="_7">五、数据保留与删除</h2>
+<p>本地数据由你控制。你可以在应用内删除会话、工作区、日志或备份，也可以在系统设置中清除应用数据或卸载应用。清除应用数据会删除应用私有目录中的配置、会话、容器与工作区数据；保存在外部目录、远程服务器或你导出位置的文件不会被自动删除，需要你自行处理。</p>
+<p>第三方服务保存的数据按其隐私政策和你的账号设置处理，本项目无法代为删除。若要删除你在 Issue 中主动提交的内容，请联系维护者或在对应平台操作。</p>
+<h2 id="_8">六、儿童与敏感信息</h2>
+<p>本应用面向具备相应技术判断能力的开发者，不专门面向儿童。请勿在对话、日志、Issue 或插件配置中提交不必要的身份证件、医疗、金融账号、密钥或其他高度敏感信息。</p>
+<h2 id="_9">七、第三方服务与政策更新</h2>
+<p>第三方 AI、Git、存储、服务器和插件服务有自己的隐私政策与数据处理规则。选择或启用它们前，请自行阅读并确认。本项目无法控制第三方的数据实践。</p>
+<p>本政策可能随功能或法律要求更新，更新后会在应用内展示新版本并标注日期。重大变化会在项目仓库说明；继续使用即表示你接受更新后的政策。</p>
+<h2 id="_10">八、联系</h2>
+<p>如对本政策有疑问，可通过 <a href="https://github.com/Lisir2002/MiniMe-bot/issues">项目 Issue</a> 联系。请勿在公开 Issue 中提交密钥、账号口令、聊天原文或未脱敏的日志。</p></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="assets/nav-data.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+# Built outputs
+.gradle/
+build/
+app/build/
+
+# 插件源码构建工具链
+node_modules/
+
+# SDK、模板与示例插件的构建产物（仓库只保留 src/ 源码）
+/plugins/sdk/dist/
+/plugins/template/dist/
+/plugins/samples/*/dist/
+/plugins/samples/*/pages/
+
+# IDE
+.idea/
+*.iml
+
+# Local config
+local.properties
+
+# Signing (release keystore + passwords — never commit)
+*.jks
+*.keystore
+keystore.properties
+
+# Debug / profiling
+*.hprof
+
+# Claude
+.claude/
+/.kotlin/
+/.agents/
+/.minibot/
+
+# 临时调试文件
+/*.log
+log-*.txt
+*.apk
+/test
+
+# Python（模型数据更新脚本）
+__pycache__/
+*.pyc
+
+# 独立插件索引仓库（jieapi/AiCode-Plugins-Store），不随主仓库提交
+/plugin-index/
+
+# 插件打包产物（scripts/package-plugins.py 生成），不入库
+/plugin-packages/
+
+# 正式插件源码各自独立成仓库，不随 App 仓库提交
+/plugin-official/
+
+# 容器镜像目录：由 scripts/sync-container-images.py 生成，CI 发布到 data 分支；
+# 内置兜底快照另存于 app/src/main/assets/container-images.json
+/data/container-images.json
+# 离线手册抓取缓存（线上页面原始 HTML，可随时重跑 scripts/manual/crawl_docs.py 生成）
+/manual-build/

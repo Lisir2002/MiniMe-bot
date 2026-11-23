@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body data-root="" data-page="index.html" data-theme="light" class="home">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="index.html"><img src="logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><section class="hero">
+  <img class="hero-logo" src="logo.png" alt="">
+  <h1>Mini-AIBOT 使用手册</h1>
+  <p>完全内置 · 离线可用 · 共 66 篇文档</p>
+  <form class="search-box" id="search-form">
+    <input id="search-input" type="search" placeholder="搜索章节、功能或关键词" autocomplete="off">
+    <button type="submit">搜索</button>
+  </form>
+  <div class="quick-row"><a class="quick" href="guide/quick-start.html">快速上手</a><a class="quick" href="guide/providers.html">AI 供应商与模型</a><a class="quick" href="guide/container.html">容器与镜像</a><a class="quick" href="guide/terminal.html">终端</a><a class="quick" href="guide/mcp.html">MCP 服务器</a><a class="quick" href="guide/plugins.html">插件</a></div>
+</section>
+<div id="search-results" class="search-results" hidden></div>
+<div id="index-body">
+  <section class="idx-section">
+  <div class="idx-section-head"><h2>使用手册</h2><span>38 篇</span></div>
+  <div class="idx-links"><a class="idx-link" href="guide/quick-start.html"><span>快速上手</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/overview.html"><span>功能总览</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/video-tutorials.html"><span>视频教程</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/free-providers.html"><span>免费供应商</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/chat.html"><span>聊天界面导览</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/modes.html"><span>三种模式（Build / Plan / Auto）</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/goal.html"><span>会话目标（Goal）</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/checkpoint.html"><span>检查点与撤销</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/terminal.html"><span>终端</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/browser.html"><span>内置浏览器</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/files.html"><span>文件浏览与代码编辑</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/git.html"><span>Git 版本管理</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/tablet.html"><span>平板与大屏适配</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/providers.html"><span>AI 供应商与模型</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/default-models.html"><span>默认与专用模型</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/token-stats.html"><span>Token 统计与费用</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/container.html"><span>容器与镜像</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/remote-ssh.html"><span>远程 SSH 模式</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/sync.html"><span>工作区同步</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/proxy.html"><span>网络代理</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/mcp.html"><span>MCP 服务器</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/skills.html"><span>技能</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/subagent.html"><span>子代理</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/plugins.html"><span>插件</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/shizuku.html"><span>Shizuku 工具</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/custom-prompts.html"><span>自定义提示词</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/memory.html"><span>记忆与项目规则</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/general.html"><span>偏好设置</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/appearance.html"><span>外观与语言</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/permissions.html"><span>工具授权</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/app-permissions.html"><span>软件权限</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/background-run.html"><span>后台运行</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/logs.html"><span>日志与故障排查</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/error-codes.html"><span>常见错误提示</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/storage.html"><span>存储空间</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/session-management.html"><span>会话管理</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/backup.html"><span>备份与还原</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="guide/about.html"><span>关于与更新</span><span class="idx-arrow">›</span></a></div>
+</section><section class="idx-section">
+  <div class="idx-section-head"><h2>进阶教程</h2><span>20 篇</span></div>
+  <div class="idx-links"><a class="idx-link" href="advanced/build-android-app.html"><span>在容器中编译 Android 应用</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/build-flutter-app.html"><span>在容器中编译 Flutter 应用</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/build-flutter-release.html"><span>在容器中构建 Flutter release APK</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/playwright-mcp.html"><span>安装 Playwright 浏览器自动化</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/adb-wireless-debug.html"><span>用 adb 无线调试其他设备</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/reasoning-modes.html"><span>思考强度与关闭思考</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/dashboard-cards.html"><span>自定义面板</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin.html"><span>开发总览</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/quick-start.html"><span>快速开始</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/source-build.html"><span>TypeScript + Vue 开发与构建</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/packaging.html"><span>打包、导入与排错</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/manifest.html"><span>plugin.json 清单参考</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/tools-runtime.html"><span>AI 工具与插件运行时</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/ui-pages.html"><span>插件页面与宿主接口</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/ui-components.html"><span>页面样式、组件与事件</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/skills-agents-mcp.html"><span>技能、子代理与 MCP</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/model-handles.html"><span>模型句柄与流式调用</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/hooks.html"><span>生命周期 Hooks</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/overlay.html"><span>系统浮层</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="advanced/plugin/shizuku-providers.html"><span>Shizuku 与插件提供商</span><span class="idx-arrow">›</span></a></div>
+</section><section class="idx-section">
+  <div class="idx-section-head"><h2>English</h2><span>6 篇</span></div>
+  <div class="idx-links"><a class="idx-link" href="en/guide/quick-start.html"><span>Quick Start</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="en/guide/overview.html"><span>Feature Overview</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="en/guide/free-providers.html"><span>Free Vendors</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="en/guide/providers.html"><span>AI Vendors &amp; Models</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="en/terms.html"><span>Terms</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="en/privacy.html"><span>Privacy</span><span class="idx-arrow">›</span></a></div>
+</section><section class="idx-section">
+  <div class="idx-section-head"><h2>法律条款 / Legal</h2><span>2 篇</span></div>
+  <div class="idx-links"><a class="idx-link" href="terms.html"><span>用户协议</span><span class="idx-arrow">›</span></a>
+<a class="idx-link" href="privacy.html"><span>隐私政策</span><span class="idx-arrow">›</span></a></div>
+</section>
+  <section class="idx-note">
+    <h2>关于本手册</h2>
+    <p>手册内容来自上游公开文档站，未发布章节由仓库 Markdown 源补齐，全部随安装包内置，无需联网。</p>
+    <p>Mini-AIBOT 基于 <a href="https://github.com/jieapi/AiCode" target="_blank" rel="noopener">jieapi/AiCode</a> 二次开发，感谢上游作者与所有贡献者。</p>
+  </section>
+</div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="assets/nav-data.js"></script>
+<script src="assets/search-data.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

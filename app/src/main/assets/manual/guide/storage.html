@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>存储空间 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/storage.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="存储空间">存储空间 </h1><p>「设置 → 存储空间」按类别展示 Mini-AIBOT 在这台设备上占用的空间，并提供清理临时数据的入口。</p><h2 id="总览">总览 </h2><p>页面顶部是应用总占用、构成条与设备剩余空间。构成条的整条宽度代表应用总占用，颜色与下方各分类的色点一一对应。页面底部固定显示「清理选中项」按钮及选中数据的大小，滚动列表时仍可操作。</p><p>统计需要逐个目录遍历文件，容器与工作区通常最慢。为了不让页面一直空着，各分类算完一个就显示一个，尚未算出的显示「—」，顶部会有「统计中…」提示。如需重新统计，点击右上角的刷新图标。</p><h2 id="占用明细">占用明细 </h2><table tabindex="0"><thead><tr><th>分类</th><th>包含什么</th></tr></thead><tbody><tr><td>聊天记录</td><td>数据库文件：会话、消息、工具结果、调用记录、检查点索引</td></tr><tr><td>容器</td><td>各容器的根文件系统。展开可看到每个容器，以及占用最大的那个容器中最大的几个目录</td></tr><tr><td>容器镜像包</td><td>下载或导入的镜像压缩包。容器装好后它不再是必需品，但删掉后该容器无法再次解压</td></tr><tr><td>工作区</td><td>应用内置工作区里的项目文件（含 <code>.git</code>）。展开可看每个项目，副标题标出其中的聊天附件</td></tr><tr><td>AI 配置与产物</td><td>技能、记忆、子代理、MCP 配置、提示词、文档，以及工具输出存档与识图会话缓存</td></tr><tr><td>检查点</td><td>AI 修改文件前留下的快照，用于撤销</td></tr><tr><td>日志</td><td>应用运行日志与 AI 请求日志</td></tr><tr><td>缓存</td><td>系统缓存目录，随时可清</td></tr><tr><td>其他数据</td><td>设置项、背景图、终端字体、SSH 私钥等零散数据</td></tr><tr><td>应用安装包</td><td>APK 本体，不可清理</td></tr></tbody></table><p>名称旁带箭头的分类点击即可展开明细。「AI 配置与产物」仅展开显示可清理的工具输出存档与识图会话缓存；技能、记忆、提示词等不可清理内容不再逐项显示，但仍计入该分类的总占用。因此，展开的可清理子项之和可能小于分类总大小。</p><div class="tip custom-block"><p class="custom-block-title">哪些不计入</p><p>通过「添加外部工作区」加进来的外部工作区在你设备的共享存储里，不属于应用占用，因此不统计。远程 SSH 模式下服务器上的文件同理。</p></div><p>聊天记录的展开明细列出占用最大的几个会话。它是按消息正文估算的字节数，比数据库文件本身小——数据库还包含索引与页对齐开销。如需减小这一项，去会话列表删掉不再需要的会话；若只想清除调用记录，在「Token 统计」页右上角重置。</p><p>容器和工作区不能在这里删除，请到「容器与镜像」页重置或删除容器、在工作区切换面板里删除工作区，避免误删正在使用的环境。删除工作区会连同该工作区的聊天记录一并删除；外部本地工作区是否删除聊天记录，由「偏好设置」中的开关决定。</p><h2 id="可释放空间">可释放空间 </h2><p>清理入口与占用明细放在一起，不再单独列出一组。可清理的四项如下，均不含聊天记录、代码或配置，但部分清理会影响历史内容的回看或追问：</p><ul><li><strong>缓存文件</strong>：勾选「缓存」分类。临时文件之后会自动重建。</li><li><strong>运行日志</strong>：勾选「日志」分类。包含应用日志与 AI 请求日志，清空后新日志照常记录；点击分类仍可展开查看两类日志的占用。</li><li><strong>工具输出存档</strong>：展开「AI 配置与产物」，勾选对应明细。AI 工具输出过长时会落盘一份完整副本。清除后，历史消息里提到的输出路径不再可读取。</li><li><strong>识图会话缓存</strong>：展开「AI 配置与产物」，勾选对应明细。这是识图追问用的历史记录，清除后无法再对旧图片继续追问；这两项只在有占用时显示。</li></ul><p>日志与缓存默认选中，工具输出与识图缓存默认不选。勾选后，底部按钮会更新选中项的合计大小；折叠分类不会取消选择。没有占用的项不可勾选，没有选中可清理数据时按钮不可点击。</p><p>点击「清理选中项」后，确认框会列出清理目标、合计大小与各项影响。确认后仅清理这些选中项，完成后页面会自动重新统计，并显示本次释放了多少空间。</p><p>清理范围是本机应用缓存、日志和全局目录中的数据，工具输出与识图缓存可能由多个工作区产生，不限当前工作区。不会清理各工作区自己的文件、附件、构建缓存或远程服务器数据。</p><div class="warning custom-block"><p class="custom-block-title">清理不可撤销</p><p>删除的文件无法恢复。虽然这些项不含聊天记录、代码或配置，但旧工具输出副本与识图会话历史无法通过重新使用恢复。</p></div><h2 id="占用偏大时如何处理">占用偏大时如何处理 </h2><ul><li><strong>容器几个 G</strong>：容器里的包管理器缓存通常是大头（如 Gradle、npm、pip 的缓存目录）。展开容器分类查看哪个目录最大，然后在终端里清理，例如 <code>rm -rf ~/.gradle/caches</code>。不再使用的容器可以在「容器与镜像」页删除。</li><li><strong>工作区偏大</strong>：<code>node_modules</code>、<code>build</code>、<code>.gradle</code> 这类构建产物占大部分，删除后重新构建即可恢复。</li><li><strong>聊天记录偏大</strong>：长会话里的工具输出最占空间，删掉早期不需要的会话即可。</li><li><strong>镜像包还在</strong>：容器已经装好后，可在「容器与镜像 → 下载镜像」页删掉对应的下载文件。</li></ul></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

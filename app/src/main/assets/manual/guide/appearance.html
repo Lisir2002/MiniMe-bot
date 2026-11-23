@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>外观与语言 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/appearance.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="外观与语言">外观与语言 </h1><p>「设置」首页点「外观主题」「背景图」或「语言」会弹出底部选择窗口，选择后立即生效并保存。</p><h2 id="外观主题">外观主题 </h2><p>面板里分三块：明暗模式、配色方案、莫奈取色。选择后不会自动关窗，便于连续对比多套配色。</p><h3 id="明暗模式">明暗模式 </h3><p>三选一：跟随系统、固定深色、固定浅色。</p><h3 id="配色方案">配色方案 </h3><p>四套预设，深浅两种模式各自配好：</p><ul><li><strong>默认蓝</strong>：App 默认的蓝色调。</li><li><strong>咖啡</strong>：暖赤陶色 + 米白纸感底。</li><li><strong>石墨</strong>：中性冷灰，颜色干扰最小。</li><li><strong>森林</strong>：低饱和绿。</li></ul><p>色块外圈是该主题的页面底色、内圈是主色，预览会跟随当前明暗模式变化。</p><p>Git 泳道色、日志级别色、diff 增删的红绿属于功能标识，不随主题变化，避免同一含义在不同主题下颜色不一致。代码编辑器的语法高亮与终端配色也是各自独立的设置。</p><h3 id="莫奈取色">莫奈取色 </h3><p>开启后从系统壁纸提取配色，上方所选的配色方案不再生效（色块变灰）。默认关闭。</p><p>需要 Android 12 及以上系统；低版本设备上开关不可用，描述会直接提示。壁纸调色板由系统生成，不同手机厂商的取色结果差异较大，效果不满意关闭即可。</p><h2 id="自定义背景图">自定义背景图 </h2><p>可以设置一张全局背景图：</p><ul><li><strong>选择图片</strong>：从系统相册选一张作为 App 全局背景，叠在所有页面内容上（水印效果，不拦截触摸）。终端页保持纯黑底，不显示背景。</li><li><strong>透明度</strong>：滑块显示 0% 到 100%，实际生效范围映射到 0% 到 20%（即滑到 100% 相当于 20% 不透明度），以保证文字始终可读。默认 15%，拖动实时生效。</li><li><strong>移除背景</strong>：恢复默认纯色背景。</li></ul><p>背景图文件保存在应用私有目录，<strong>不随备份导出</strong>，更换设备需要重新设置。</p><h2 id="语言">语言 </h2><p>可以跟随系统语言，也可以直接指定一种已支持的语言。</p><h2 id="终端外观">终端外观 </h2><p>终端的配色主题、字体、字号、光标样式是单独一套设置，见<a href="terminal.html#外观设置">终端</a>。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

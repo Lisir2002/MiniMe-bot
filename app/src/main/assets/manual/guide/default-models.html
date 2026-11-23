@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>默认与专用模型 · Mini-AIBOT 使用手册</title>
+<link rel="stylesheet" href="../assets/manual.css">
+</head>
+<body data-root="../" data-page="guide/default-models.html" data-theme="light">
+<header class="topbar">
+  <button class="icon-btn" id="menu-btn" aria-label="打开目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="../index.html"><img src="../logo.png" alt=""><span>使用手册</span></a>
+  <div class="top-actions">
+    <a class="top-action" href="../index.html">首页</a>
+    <button class="top-action" id="search-open" type="button">搜索</button>
+    <button class="top-action close" id="manual-close" type="button">退出</button>
+  </div>
+</header>
+<div class="drawer-mask" id="mask"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">目录</span>
+      <button class="icon-btn" id="drawer-close" aria-label="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"/></svg></button>
+    </div>
+    <form class="sidebar-search" id="nav-search-form">
+      <input id="nav-search-input" type="search" placeholder="搜索手册" autocomplete="off">
+    </form>
+    <div id="sidebar-nav"></div>
+  </aside>
+  <main class="main">
+    <article class="vp-doc"><div><h1 id="默认模型">默认模型 </h1><p>「设置 → 默认模型」里除了新会话使用的默认模型，还可以给几个特定用途单独指定模型。</p><h2 id="识图模型">识图模型 </h2><p>当前聊天模型支持视觉时，图片会直接附加到当前对话，由聊天模型分析；聊天模型不支持视觉时，才使用这里的配置建立独立识图会话。</p><ul><li><strong>跟随当前聊天模型</strong>（默认）：独立识图会话也使用当前聊天模型，需确保模型支持图片输入。</li><li><strong>指定专用模型</strong>：独立识图会话使用指定模型，适合聊天模型不支持图片的情况。配置的供应商需已启用并填写 API Key，否则回退到当前聊天模型。</li></ul><p>列表里每个模型旁边会标注是否支持图片输入，供你参考。注意这里<strong>不做强制拦截</strong>：如果你选了一个不支持图片的模型，识图会失败，AI 会收到错误信息并自行处理（通常会提示你换一个模型）。</p><p>识图的用法上有几点值得知道：</p><ul><li>AI 一次最多可以传入 <strong>5 张图片</strong>做对比分析。</li><li>直接附图时，继续在当前聊天中追问即可；独立识图会生成会话标识，AI 可沿用该会话追问，保留之前看过的图和问答。</li><li>默认清晰度与原图优先模式均优先保留不超过 <strong>4 MiB</strong> 的 JPEG、PNG、WebP、GIF 原文件；其他图片转为最长边不超过 <strong>1536 像素</strong>的 JPEG。</li><li>低清模式将图片转为最长边不超过 <strong>512 像素</strong>的 JPEG，适合节省 token。</li></ul><h2 id="生图模型">生图模型 </h2><p>设置 <code>generateImage</code> 工具使用的模型，支持 OpenAI 和 Gemini 兼容接口。</p><ul><li>OpenAI 兼容接口支持尺寸、数量、画质、背景、风格和输出格式等参数。</li><li>Gemini 兼容接口使用模型默认尺寸与分辨率；生成多张图片时会调用多次。</li><li>图片默认保存到 <code>~/.minibot/generated-images/</code>，也可指定工作区路径。单张图片上限 20MB，单次调用总计上限 48MB。</li></ul><h2 id="图像模型对话生图">图像模型对话生图 </h2><p>通过 Gemini 兼容接口接入支持图像输出的聊天模型后，可直接生成图片、上传参考图，并在后续对话中继续修改生成结果。</p><h2 id="子代理模型档位">子代理模型档位 </h2><p>AI 派发子代理时，会按任务难度选一个档位，而不是固定用同一个模型。这里定义「哪个档位对应哪个模型」：</p><table tabindex="0"><thead><tr><th>档位</th><th>适合的活</th></tr></thead><tbody><tr><td>轻量</td><td>只读探索、批量定位、机械改名</td></tr><tr><td>均衡</td><td>单文件修改、常规 bug 修复</td></tr><tr><td>强力</td><td>跨模块重构、疑难排查、方案设计</td></tr></tbody></table><ul><li>每档都可以选「未配置」：<strong>只配你用得到的档位即可</strong>，未配置的档位会自动降级（见下）。</li><li>每个档位可指定任意已启用提供商下的任意模型，支持按模型名搜索——接中转站时上百个模型也能找到。</li><li>优先级：子代理定义里写死了模型时，以定义为准（档位被忽略）；否则用 AI 选的档位。</li><li>降级顺序：请求的档位未配置或对应提供商被删除/停用 → 退到「均衡」档 → 仍未配置则继承当前会话模型。发生降级时，AI 会在工具结果里收到具体说明，你也能在对话里看到它按哪个模型继续。</li><li>删掉某个提供商时，引用它的档位会自动清空，不会留下指向空模型的配置。</li></ul><h2 id="标题总结模型">标题总结模型 </h2><p>新会话发出第一条消息后，Mini-AIBOT 会自动给会话生成一个标题。这里可以指定专门用于该任务的模型。</p><ul><li><strong>跟随当前聊天模型</strong>（默认）。</li><li><strong>指定专用模型</strong>：建议选一个便宜快速的小模型，标题这种活不需要好模型。</li></ul><p>标题生成在后台异步进行，不会拖慢你的对话。如果生成失败或者取不到结果，会保留系统按首句截断的临时标题，不影响使用。</p><p>生成标题用的提示词也可以自行修改，方式见「自定义提示词」。</p></div></article>
+    <footer class="page-foot">离线内置手册 · 内容基于上游 AiCode 文档整理 · GPL-3.0</footer>
+  </main>
+</div>
+<script src="../assets/nav-data.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>
