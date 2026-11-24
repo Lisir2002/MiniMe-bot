@@ -199,6 +199,7 @@ internal enum class SettingsSection(@param:StringRes val titleRes: Int) {
     PluginDevDetail(R.string.settings_plugins),
     PluginPage(R.string.settings_plugin_page_title),
     Container(R.string.settings_container),
+    CloudDeploy(R.string.cloud_deploy_title),
     ContainerDownloads(R.string.container_download_image),
     Proxy(R.string.proxy_title),
     Log(R.string.settings_log),
@@ -236,6 +237,7 @@ private fun SettingsSection.depth(): Int = when (this) {
     SettingsSection.PluginStoreDetail,
     SettingsSection.PluginDevDetail,
     SettingsSection.ContainerDownloads,
+    SettingsSection.CloudDeploy,
     SettingsSection.Log -> 2
     else -> 1
 }
@@ -584,6 +586,7 @@ fun SettingsScreen(
         SettingsSection.SessionDetail -> SettingsSection.SessionManagement
         SettingsSection.PluginPage -> if (expanded) null else SettingsSection.Menu
         SettingsSection.ContainerDownloads -> SettingsSection.Container
+        SettingsSection.CloudDeploy -> SettingsSection.Container
         else -> if (expanded) null else SettingsSection.Menu
     }
 
@@ -1534,10 +1537,14 @@ fun SettingsScreen(
                     },
                     resetState = containerReset,
                     onRestoreBuiltin = { viewModel.restoreBuiltinAlpine() },
+                    onOpenCloudDeploy = { section = SettingsSection.CloudDeploy },
                     remoteConnections = remoteConnections,
                     onReorder = { fromIndex, toIndex ->
                         viewModel.reorderContainerProfiles(fromIndex, toIndex)
                     }
+                )
+                SettingsSection.CloudDeploy -> CloudDeployScreen(
+                    onNavigateBack = { section = SettingsSection.Container }
                 )
                 SettingsSection.ContainerDownloads -> ContainerImageDownloadSection(
                     catalog = imageCatalog,

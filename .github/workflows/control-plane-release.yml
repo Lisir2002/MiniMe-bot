@@ -1,0 +1,102 @@
+name: Control Plane Release
+
+# 只在 control-plane-v* 标签上发布，避免和 App 的 v* 发布互相触发。
+on:
+  push:
+    tags:
+      - 'control-plane-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and release control plane
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: minibot
+          POSTGRES_USER: minibot
+          POSTGRES_PASSWORD: minibot-dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U minibot -d minibot"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: gradle
+
+      - name: Test control plane
+        env:
+          MINIBOT_TEST_DB_URL: jdbc:postgresql://127.0.0.1:5432/minibot
+          MINIBOT_TEST_DB_USER: minibot
+          MINIBOT_TEST_DB_PASSWORD: minibot-dev
+        run: ./gradlew -p control-plane test --no-daemon
+
+      - name: Build distribution
+        run: ./gradlew -p control-plane installDist --no-daemon
+
+      - name: Package release assets
+        run: |
+          set -e
+          mkdir -p dist
+          tar -czf dist/minibot-control-dist.tar.gz -C control-plane/build/install minibot-control
+          test -f control-plane/build/install/minibot-control/bin/minibot-control
+          cp control-plane/deploy/install.sh dist/install.sh
+          cp control-plane/deploy/minibot-control.service dist/minibot-control.service
+          cp control-plane/deploy/caddy.service dist/caddy.service
+          (
+            cd dist
+            sha256sum minibot-control-dist.tar.gz > minibot-control-dist.tar.gz.sha256
+            sha256sum install.sh minibot-control-dist.tar.gz minibot-control.service caddy.service > SHA256SUMS
+          )
+          chmod 0755 dist/install.sh
+          bash -n dist/install.sh
+          dist/install.sh --help >/dev/null
+          ls -lh dist
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#control-plane-v}"
+          cat > release-notes.raw <<'EOF'
+          Mini-AIBOT 控制面 @VERSION@
+
+          资产：
+          - install.sh：自包含安装器，支持 --access ip 或 --domain。
+          - minibot-control-dist.tar.gz：控制面分发包。
+          - minibot-control-dist.tar.gz.sha256：分发包校验值。
+          - SHA256SUMS：全部资产校验值。
+
+          安装示例：
+          ```bash
+          curl -fsSL https://github.com/Lisir2002/MiniMe-bot/releases/download/@TAG@/install.sh | \
+            sudo bash -s -- --dist-url https://github.com/Lisir2002/MiniMe-bot/releases/download/@TAG@/minibot-control-dist.tar.gz --access ip
+          ```
+          EOF
+          sed -e "s|@TAG@|$tag|g" -e "s|@VERSION@|$version|g" release-notes.raw > release-notes.md
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" dist/* --clobber
+          else
+            gh release create "$tag" dist/* --title "Control Plane v$version" --notes-file release-notes.md
+          fi

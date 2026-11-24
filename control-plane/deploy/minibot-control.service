@@ -1,0 +1,19 @@
+[Unit]
+Description=Mini-AIBOT cloud control plane
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=minibot
+Group=minibot
+EnvironmentFile=/etc/minibot/control.env
+ExecStart=/opt/minibot/bin/minibot-control
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

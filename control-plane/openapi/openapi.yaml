@@ -1,0 +1,1381 @@
+openapi: 3.1.0
+info:
+  title: Mini-AIBOT Control Plane
+  version: 0.5.0
+  description: |
+    Contract for the self-hosted Mini-AIBOT cloud control plane.
+    Phase 5 adds the model/tool loop, Docker-backed shell execution, tool events
+    and pending approval decisions. Notifications, files and terminals follow later.
+servers:
+  - url: https://{host}
+    variables:
+      host:
+        default: minibot.example.com
+        description: User-owned control plane host
+tags:
+  - name: health
+  - name: pairing
+  - name: server
+  - name: deployment
+  - name: containers
+  - name: sessions
+  - name: turns
+  - name: events
+  - name: models
+  - name: tools
+  - name: approvals
+paths:
+  /health:
+    get:
+      tags: [health]
+      operationId: health
+      security: []
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /api/v1/pair/claim:
+    post:
+      tags: [pairing]
+      operationId: claimPairing
+      security: []
+      description: |
+        Claim the first device with a one-time bootstrap token. The first
+        version supports exactly one active device.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PairClaimRequest"
+      responses:
+        "200":
+          description: Device paired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PairClaimResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: This server already has a paired device
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/server/info:
+    get:
+      tags: [server]
+      operationId: getServerInfo
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Server metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerInfoResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/deploy/options:
+    get:
+      tags: [deployment]
+      operationId: getDeploymentOptions
+      security:
+        - bearerAuth: []
+      description: |
+        Official image catalog, optional components, package managers and
+        resource presets used by the independent cloud deployment wizard.
+      responses:
+        "200":
+          description: Deployment catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeploymentOptionsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/containers:
+    get:
+      tags: [containers]
+      operationId: listContainers
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Container profiles with instance state
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContainerSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [containers]
+      operationId: deployContainer
+      security:
+        - bearerAuth: []
+      description: |
+        Create a cloud container profile, pull the selected official image,
+        create and start one Docker container with isolated volumes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeployContainerRequest"
+      responses:
+        "201":
+          description: Container deployed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/v1/containers/{id}:
+    get:
+      tags: [containers]
+      operationId: getContainer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+      responses:
+        "200":
+          description: Container profile and instance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [containers]
+      operationId: updateContainer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContainerRequest"
+      responses:
+        "200":
+          description: Container updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/containers/{id}/start:
+    post:
+      tags: [containers]
+      operationId: startContainer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+      description: |
+        Start the container if it is stopped, or recreate it from the same
+        profile volumes if the Docker container no longer exists.
+      responses:
+        "200":
+          description: Container running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/v1/containers/{id}/stop:
+    post:
+      tags: [containers]
+      operationId: stopContainer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+      responses:
+        "200":
+          description: Container stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/v1/containers/{id}/instance:
+    delete:
+      tags: [containers]
+      operationId: deleteContainerInstance
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+      description: |
+        Delete the running instance without removing the Docker container,
+        volumes, profile or model bindings. The next start recreates the
+        runtime from the same profile.
+      responses:
+        "200":
+          description: Instance stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/containers/{id}/archive:
+    delete:
+      tags: [containers]
+      operationId: archiveContainer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ContainerId"
+        - name: confirm
+          in: query
+          required: true
+          schema:
+            type: boolean
+          description: Must be true; destructive archive requires explicit confirmation.
+      responses:
+        "200":
+          description: Container archived and volumes removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/v1/sessions:
+    get:
+      tags: [sessions]
+      operationId: listSessions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Sessions for the paired server
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [sessions]
+      operationId: createSession
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionRequest"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionRecord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/sessions/{id}/snapshot:
+    get:
+      tags: [sessions]
+      operationId: getSessionSnapshot
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Current turn, queue and recent messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionSnapshot"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/sessions/{id}/turns:
+    post:
+      tags: [turns]
+      operationId: createTurn
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTurnRequest"
+      responses:
+        "200":
+          description: Turn queued. Duplicate clientMessageId returns the original turn.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TurnCreatedResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/sessions/{id}/turns/{turnId}/cancel:
+    post:
+      tags: [turns]
+      operationId: cancelTurn
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+        - $ref: "#/components/parameters/TurnId"
+      responses:
+        "200":
+          description: Turn cancelled or already terminal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TurnRecord"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The turn is already running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/sessions/{id}/events:
+    get:
+      tags: [events]
+      operationId: listSessionEvents
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+        - name: afterSeq
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 500
+      responses:
+        "200":
+          description: Events after the supplied session sequence
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/sessions/{id}/stream:
+    get:
+      tags: [events]
+      operationId: streamSessionEvents
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+        - name: afterSeq
+          in: query
+          schema:
+            type: integer
+            format: int64
+            default: 0
+      responses:
+        "200":
+          description: Server-sent events. Each data line is an EventEnvelope JSON object.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/model-credentials:
+    get:
+      tags: [models]
+      operationId: listModelCredentials
+      security:
+        - bearerAuth: []
+      description: Cloud credentials only. The secret is never returned.
+      responses:
+        "200":
+          description: Credential summaries without plaintext
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CredentialSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [models]
+      operationId: createModelCredential
+      security:
+        - bearerAuth: []
+      description: Encrypts the provider secret with the server master key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCredentialRequest"
+      responses:
+        "201":
+          description: Credential created as unassigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/model-definitions:
+    get:
+      tags: [models]
+      operationId: listModelDefinitions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Model definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ModelDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [models]
+      operationId: createModelDefinition
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateModelDefinitionRequest"
+      responses:
+        "201":
+          description: Model definition created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelDefinition"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/model-bindings:
+    get:
+      tags: [models]
+      operationId: listModelBindings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: profileId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Bindings for one container profile
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ModelBinding"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [models]
+      operationId: createModelBinding
+      security:
+        - bearerAuth: []
+      description: The binding activates the cloud credential and is usable only for that profile.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateModelBindingRequest"
+      responses:
+        "201":
+          description: Model binding created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelBinding"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Provider or credential scope mismatch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/model-bindings/{id}:
+    delete:
+      tags: [models]
+      operationId: deleteModelBinding
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Binding removed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/approvals:
+    get:
+      tags: [approvals]
+      operationId: listPendingApprovals
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending]
+      responses:
+        "200":
+          description: Pending approvals across the server
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Approval"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/turns/{turnId}/approvals/{approvalId}:
+    post:
+      tags: [approvals]
+      operationId: decideApproval
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: turnId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: approvalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalDecisionRequest"
+      responses:
+        "200":
+          description: Decision recorded, repeated decisions are idempotent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalDecisionResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+  parameters:
+    ContainerId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SessionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TurnId:
+      name: turnId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Malformed request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Missing or invalid device token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: State conflict or already decided resource
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalError:
+      description: Control plane or Docker failure
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, time]
+      properties:
+        status:
+          type: string
+          example: ok
+        time:
+          type: string
+          format: date-time
+    PairClaimRequest:
+      type: object
+      required: [bootstrapToken, devicePublicKey]
+      properties:
+        bootstrapToken:
+          type: string
+        devicePublicKey:
+          type: string
+        deviceName:
+          type: string
+          default: Android
+    PairClaimResponse:
+      type: object
+      required: [deviceId, deviceToken, serverId, serverName]
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+        deviceToken:
+          type: string
+          description: Returned exactly once. Store it in the device keystore.
+        serverId:
+          type: string
+        serverName:
+          type: string
+    ServerInfoResponse:
+      type: object
+      required: [serverId, serverName, timezone, paired, version, time]
+      properties:
+        serverId:
+          type: string
+        serverName:
+          type: string
+        timezone:
+          type: string
+        paired:
+          type: boolean
+        version:
+          type: string
+        time:
+          type: string
+          format: date-time
+    DeploymentImageOption:
+      type: object
+      required: [id, displayName, imageRef, architecture, distro]
+      properties:
+        id:
+          type: string
+          example: debian-amd64
+        displayName:
+          type: string
+        imageRef:
+          type: string
+        architecture:
+          type: string
+          enum: [amd64, arm64]
+        distro:
+          type: string
+          enum: [debian, ubuntu, alpine]
+    DeploymentComponentOption:
+      type: object
+      required: [id, displayName, category, description]
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+    ResourcePreset:
+      type: object
+      required: [id, displayName, resourcePolicy]
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        resourcePolicy:
+          $ref: "#/components/schemas/ResourcePolicy"
+    DeploymentOptionsResponse:
+      type: object
+      required: [images, components, packageManagers, presets]
+      properties:
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeploymentImageOption"
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeploymentComponentOption"
+        packageManagers:
+          type: array
+          items:
+            type: string
+        presets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourcePreset"
+    ResourcePolicy:
+      type: object
+      properties:
+        cpuCores:
+          type: number
+          minimum: 0
+          description: Docker NanoCPUs, converted from cores.
+        memoryMb:
+          type: integer
+          format: int64
+          minimum: 1
+        diskMb:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Metadata only in Phase 2; volume quota enforcement is later.
+    PackageSpec:
+      type: object
+      required: [ecosystem, name]
+      properties:
+        ecosystem:
+          type: string
+          enum: [apt, apk, npm, pnpm, yarn, pip, uv, cargo, gem, composer, go]
+        name:
+          type: string
+        version:
+          type: string
+    DeployContainerRequest:
+      type: object
+      required: [name, imageRef]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        imageRef:
+          type: string
+          description: Official image reference selected from the deployment catalog.
+        imageDigest:
+          type: string
+          description: Optional pinned digest for verification.
+        resourcePolicy:
+          $ref: "#/components/schemas/ResourcePolicy"
+        components:
+          type: array
+          items:
+            type: string
+          description: Selected component ids from the deployment catalog.
+        packages:
+          type: array
+          items:
+            $ref: "#/components/schemas/PackageSpec"
+        pinned:
+          type: boolean
+          default: false
+    UpdateContainerRequest:
+      type: object
+      required: [pinned]
+      properties:
+        pinned:
+          type: boolean
+    ContainerProfile:
+      type: object
+      required: [id, kind, name, imageRef, resourcePolicy, components, packages, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [LOCAL, CLOUD]
+        name:
+          type: string
+        imageRef:
+          type: string
+        imageDigest:
+          type: string
+        resourcePolicy:
+          $ref: "#/components/schemas/ResourcePolicy"
+        components:
+          type: array
+          items:
+            type: string
+        packages:
+          type: array
+          items:
+            $ref: "#/components/schemas/PackageSpec"
+        createdAt:
+          type: string
+          format: date-time
+    ContainerInstance:
+      type: object
+      required: [id, profileId, phase, pinned]
+      properties:
+        id:
+          type: string
+          format: uuid
+        profileId:
+          type: string
+          format: uuid
+        containerId:
+          type: string
+          description: Docker container id. Null before the first successful create.
+        phase:
+          type: string
+          enum: [PROVISIONING, RUNNING, STOPPING, STOPPED, ARCHIVED, ERROR, DELETING]
+        pinned:
+          type: boolean
+        lastActivityAt:
+          type: string
+          format: date-time
+        lastError:
+          type: string
+    ContainerActivity:
+      type: object
+      properties:
+        activeTurns:
+          type: integer
+          default: 0
+        activeTerminals:
+          type: integer
+          default: 0
+        pendingApprovals:
+          type: integer
+          default: 0
+        pinned:
+          type: boolean
+          default: false
+    ContainerSummary:
+      type: object
+      required: [profile, instance, activity]
+      properties:
+        profile:
+          $ref: "#/components/schemas/ContainerProfile"
+        instance:
+          $ref: "#/components/schemas/ContainerInstance"
+        activity:
+          $ref: "#/components/schemas/ContainerActivity"
+    SessionSummary:
+      type: object
+      required: [id, profileId, title, lastSeq, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        profileId:
+          type: string
+          format: uuid
+        workspaceId:
+          type: [string, "null"]
+          format: uuid
+        title:
+          type: string
+        lastSeq:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SessionRecord:
+      type: object
+      required: [id, profileId, title, lastSeq, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        profileId:
+          type: string
+          format: uuid
+        workspaceId:
+          type: [string, "null"]
+          format: uuid
+        title:
+          type: string
+        modelBindingId:
+          type: [string, "null"]
+        lastSeq:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateSessionRequest:
+      type: object
+      required: [profileId, title]
+      properties:
+        profileId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        workspaceId:
+          type: [string, "null"]
+          format: uuid
+        modelBindingId:
+          type: [string, "null"]
+          format: uuid
+          description: Binding for this container profile. Required for real model turns.
+    CreateTurnRequest:
+      type: object
+      required: [clientMessageId]
+      properties:
+        clientMessageId:
+          type: string
+          maxLength: 128
+          description: Idempotency key generated by the App for this message.
+        content:
+          type: string
+          maxLength: 100000
+        attachments:
+          type: array
+          items:
+            type: string
+    TurnCreatedResponse:
+      type: object
+      required: [turnId, seq, status]
+      properties:
+        turnId:
+          type: string
+          format: uuid
+        seq:
+          type: integer
+          format: int64
+          description: The turn.created event sequence. Duplicate requests keep the same value.
+        status:
+          type: string
+          enum: [QUEUED, WAITING_RUNTIME, RUNNING, WAITING_APPROVAL, COMPLETED, FAILED, INTERRUPTED, CANCELLED]
+    TurnRecord:
+      type: object
+      required: [id, sessionId, status, queueOrder, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        clientMessageId:
+          type: [string, "null"]
+        status:
+          type: string
+          enum: [QUEUED, WAITING_RUNTIME, RUNNING, WAITING_APPROVAL, COMPLETED, FAILED, INTERRUPTED, CANCELLED]
+        queueOrder:
+          type: integer
+          format: int64
+        createdSeq:
+          type: [integer, "null"]
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: [string, "null"]
+          format: date-time
+        finishedAt:
+          type: [string, "null"]
+          format: date-time
+        errorCode:
+          type: [string, "null"]
+        errorMessage:
+          type: [string, "null"]
+    MessageRecord:
+      type: object
+      required: [id, sessionId, role, content, contentJson, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        turnId:
+          type: [string, "null"]
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant, system, tool]
+        content:
+          type: string
+        contentJson:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    SessionSnapshot:
+      type: object
+      required: [session, queue, messages, lastSeq, pendingApprovals]
+      properties:
+        session:
+          $ref: "#/components/schemas/SessionRecord"
+        currentTurn:
+          $ref: "#/components/schemas/TurnRecord"
+        queue:
+          type: array
+          items:
+            $ref: "#/components/schemas/TurnRecord"
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageRecord"
+        lastSeq:
+          type: integer
+          format: int64
+        pendingApprovals:
+          type: array
+          items:
+            type: string
+        container:
+          $ref: "#/components/schemas/ContainerSummary"
+        modelBindingId:
+          type: [string, "null"]
+    EventEnvelope:
+      type: object
+      required: [id, sessionId, seq, type, payload, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        seq:
+          type: integer
+          format: int64
+        turnId:
+          type: [string, "null"]
+          format: uuid
+        messageId:
+          type: [string, "null"]
+          format: uuid
+        type:
+          type: string
+          example: message.delta
+        payload:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+    CredentialSummary:
+      type: object
+      required: [id, scope, provider, baseUrl, status, hasSecret, keyVersion, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        scope:
+          type: string
+          enum: [LOCAL_APP, CLOUD_SERVER]
+        provider:
+          type: string
+        baseUrl:
+          type: string
+        status:
+          type: string
+          enum: [UNASSIGNED, ACTIVE, INVALID, REVOKED]
+        hasSecret:
+          type: boolean
+        keyVersion:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+    CreateCredentialRequest:
+      type: object
+      required: [provider, baseUrl, secret]
+      properties:
+        provider:
+          type: string
+          example: openai
+        baseUrl:
+          type: string
+          example: https://api.openai.com/v1
+        secret:
+          type: string
+          writeOnly: true
+        displayName:
+          type: [string, "null"]
+    ModelDefinition:
+      type: object
+      required: [id, provider, model, displayName, capabilitiesJson, contextWindow, inputPrice, outputPrice, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        provider:
+          type: string
+        model:
+          type: string
+        displayName:
+          type: string
+        capabilitiesJson:
+          type: string
+        contextWindow:
+          type: integer
+        inputPrice:
+          type: number
+        outputPrice:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+    CreateModelDefinitionRequest:
+      type: object
+      required: [provider, model, displayName]
+      properties:
+        provider:
+          type: string
+        model:
+          type: string
+        displayName:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        contextWindow:
+          type: integer
+          default: 32768
+        inputPrice:
+          type: number
+          default: 0
+        outputPrice:
+          type: number
+          default: 0
+    ModelBinding:
+      type: object
+      required: [id, profileId, modelDefinitionId, credentialId, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        profileId:
+          type: string
+          format: uuid
+        modelDefinitionId:
+          type: string
+          format: uuid
+        credentialId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, ERROR]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateModelBindingRequest:
+      type: object
+      required: [profileId, modelDefinitionId, credentialId]
+      properties:
+        profileId:
+          type: string
+          format: uuid
+        modelDefinitionId:
+          type: string
+          format: uuid
+        credentialId:
+          type: string
+          format: uuid
+    Approval:
+      type: object
+      required: [id, turnId, sessionId, status, requestJson, expiresAt, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        turnId:
+          type: string
+        sessionId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, APPROVED, DENIED, EXPIRED, CANCELLED]
+        requestJson:
+          type: string
+        decision:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+        decidedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    ApprovalDecisionRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approve, deny]
+        reason:
+          type: string
+    ApprovalDecisionResult:
+      type: object
+      required: [approval, alreadyDecided]
+      properties:
+        approval:
+          $ref: "#/components/schemas/Approval"
+        alreadyDecided:
+          type: boolean
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        retryable:
+          type: boolean
+          default: false

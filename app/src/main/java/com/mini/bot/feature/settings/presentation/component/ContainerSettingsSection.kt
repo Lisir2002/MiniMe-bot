@@ -11,6 +11,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -100,6 +101,7 @@ import com.mini.bot.feature.workspace.domain.model.RemoteConnection
 import com.mini.bot.feature.workspace.domain.model.RemoteProtocol
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Check
+import compose.icons.feathericons.Cloud
 import compose.icons.feathericons.Cpu
 import compose.icons.feathericons.Edit3
 import compose.icons.feathericons.HardDrive
@@ -142,6 +144,7 @@ internal fun ContainerSection(
     /** 非 null 说明正在重置，界面弹不可取消的进度框直到删完。 */
     resetState: ContainerResetUiState? = null,
     onRestoreBuiltin: () -> Unit = {},
+    onOpenCloudDeploy: () -> Unit = {},
     remoteConnections: List<RemoteConnection> = emptyList(),
     /** 长按拖拽排序落库（顺序即列表存储顺序）。 */
     onReorder: (fromIndex: Int, toIndex: Int) -> Unit = { _, _ -> }
@@ -179,6 +182,10 @@ internal fun ContainerSection(
             Button(onClick = onRestoreBuiltin) {
                 Text(stringResource(R.string.container_restore_builtin))
             }
+            CloudDeployEntryCard(
+                onClick = onOpenCloudDeploy,
+                modifier = Modifier.padding(top = Spacing.md)
+            )
         }
     } else {
         // 与「供应商」页一致：一行一张独立圆角卡片（8dp 间距），长按行内容拖拽排序
@@ -195,6 +202,9 @@ internal fun ContainerSection(
             contentPadding = PaddingValues(top = Spacing.sm),
             verticalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
+            item(key = "cloud-deploy") {
+                CloudDeployEntryCard(onClick = onOpenCloudDeploy)
+            }
             if (profiles.isEmpty()) {
                 item(key = "container-empty") {
                     Column(
@@ -472,6 +482,53 @@ private fun deleteHint(context: Context, profile: ContainerProfile): String = wh
  * 行主体点击切换镜像（未选中时弹确认）；选中的容器以名称变主题色表示（不再额外放勾选图标）。
  * [dragModifier] 由列表侧提供（长按拖动排序的手柄），只挂在左侧信息区，避免与左滑删除抢手势。
  */
+@Composable
+private fun CloudDeployEntryCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(Radius.lg),
+        color = MaterialTheme.semanticColors.cardSurface,
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier.padding(Spacing.md),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = RoundedCornerShape(Radius.md),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = FeatherIcons.Cloud,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            Spacer(Modifier.width(Spacing.md))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.cloud_deploy_entry_title),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = stringResource(R.string.cloud_deploy_entry_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.semanticColors.subtleText
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun ContainerRow(
     profile: ContainerProfile,
