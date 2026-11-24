@@ -55,7 +55,7 @@ jobs:
       - name: Package distribution
         run: |
           cd control-plane/build/install
-          tar -czf ../../minibot-control-dist.tar.gz minibot-control
+          tar -czf ../minibot-control-dist.tar.gz minibot-control
 
       - name: Upload distribution
         uses: actions/upload-artifact@v4
