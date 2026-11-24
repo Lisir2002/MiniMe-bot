@@ -7,7 +7,7 @@ package com.mini.bot.feature.settings.domain.model
  * 域名地址走 --domain，纯 IP 走 --access ip；没有域名时仍然可以完整安装。
  */
 object CloudInstallCommand {
-    const val RELEASE_TAG = "control-plane-v0.1.0"
+    const val RELEASE_TAG = "control-plane-v0.1.1"
     const val RELEASE_BASE = "https://github.com/Lisir2002/MiniMe-bot/releases/download/$RELEASE_TAG"
     const val INSTALLER_URL = "$RELEASE_BASE/install.sh"
     const val DISTRIBUTION_URL = "$RELEASE_BASE/minibot-control-dist.tar.gz"

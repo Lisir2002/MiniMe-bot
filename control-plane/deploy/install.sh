@@ -6,6 +6,7 @@ CONFIG_DIR="/etc/minibot"
 DATA_DIR="/var/lib/minibot"
 SERVICE_FILE="minibot-control.service"
 BINARY=""
+BINARY_LIB_DIR=""
 DIST_URL=""
 DIST_SHA256=""
 DIST_TMP_DIR=""
@@ -214,6 +215,7 @@ download_distribution() {
   fi
   tar -xzf "$archive" -C "$DIST_TMP_DIR"
   BINARY="$DIST_TMP_DIR/minibot-control/bin/minibot-control"
+  BINARY_LIB_DIR="$DIST_TMP_DIR/minibot-control/lib"
   if [[ ! -x "$BINARY" ]]; then
     echo "The distribution does not contain minibot-control/bin/minibot-control." >&2
     exit 1
@@ -345,12 +347,28 @@ if [[ ! -x "$BINARY" ]]; then
   echo "Control-plane executable is missing or not executable: $BINARY" >&2
   exit 1
 fi
+if [[ -z "$BINARY_LIB_DIR" ]]; then
+  local_bin_dir="$(cd "$(dirname "$BINARY")" && pwd)"
+  if [[ -d "$local_bin_dir/../lib" ]]; then
+    BINARY_LIB_DIR="$local_bin_dir/../lib"
+  fi
+fi
 
 install -d -m 0755 "$INSTALL_DIR/bin"
 install -d -m 0750 "$CONFIG_DIR"
 install -d -m 0750 "$DATA_DIR"
 install -d -m 0750 "$DATA_DIR/postgres"
 install -m 0755 "$BINARY" "$INSTALL_DIR/bin/minibot-control"
+if [[ -n "$BINARY_LIB_DIR" ]]; then
+  if [[ ! -d "$BINARY_LIB_DIR" ]]; then
+    echo "Control-plane library directory is missing: $BINARY_LIB_DIR" >&2
+    exit 1
+  fi
+  rm -rf "$INSTALL_DIR/lib.new"
+  cp -a "$BINARY_LIB_DIR" "$INSTALL_DIR/lib.new"
+  rm -rf "$INSTALL_DIR/lib"
+  mv "$INSTALL_DIR/lib.new" "$INSTALL_DIR/lib"
+fi
 
 if [[ -z "$DB_URL" ]]; then
   if [[ -f "$DB_PASSWORD_FILE" ]]; then
@@ -464,7 +482,8 @@ chmod 0640 "$CONFIG_DIR/control.env"
 chmod 0640 "$CONFIG_DIR/db.password" 2>/dev/null || true
 
 systemctl daemon-reload
-systemctl enable --now "$SERVICE_FILE"
+systemctl enable "$SERVICE_FILE" >/dev/null
+systemctl restart "$SERVICE_FILE"
 
 if [[ "$ACCESS_MODE" == "domain" ]]; then
   configure_caddy_domain

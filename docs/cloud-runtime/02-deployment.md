@@ -20,9 +20,9 @@
 控制面发布资产由 `.github/workflows/control-plane-release.yml` 在 `control-plane-v*` 标签上生成。发布后的推荐安装方式是：
 
 ```bash
-curl -fsSL https://github.com/Lisir2002/MiniMe-bot/releases/download/control-plane-v0.1.0/install.sh | \
+curl -fsSL https://github.com/Lisir2002/MiniMe-bot/releases/download/control-plane-v0.1.1/install.sh | \
   sudo bash -s -- \
-  --dist-url https://github.com/Lisir2002/MiniMe-bot/releases/download/control-plane-v0.1.0/minibot-control-dist.tar.gz \
+  --dist-url https://github.com/Lisir2002/MiniMe-bot/releases/download/control-plane-v0.1.1/minibot-control-dist.tar.gz \
   --access ip
 ```
 
@@ -50,6 +50,7 @@ sudo ./deploy/install.sh \
 - 生成服务器 ID
 - 初始化 PostgreSQL
 - 安装 `minibot-control` systemd 服务
+- 从分发包同步 `bin` 启动器和 `lib` 依赖，并重启服务，重复执行会真正切换到新进程
 - 创建 `minibot` 服务用户时固定 UID/GID `1000:1000`，与基础镜像执行用户对齐；端口/UID 冲突时安装器直接报错
 - 输出服务器地址、证书指纹
 - 进入“等待认领”
